@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+runs/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
