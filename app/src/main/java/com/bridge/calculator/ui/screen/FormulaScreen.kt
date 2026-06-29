@@ -29,17 +29,39 @@ fun FormulaScreen(onBack: () -> Unit) {
             item { SectionTitle(title = "万能公式", subtitle = "Core Formulas") }
             items(viewModel.getBasicFormulas()) { formula -> FormulaCard(formula = formula) }
             item { Spacer(modifier = Modifier.height(8.dp)); SectionTitle(title = "速算系数", subtitle = "Quick Coefficients") }
-            item { Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) { Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) { listOf("30°" to "0.536" to Color(0xFF1976D2), "45°" to "0.828" to Color(0xFF388E3C), "60°" to "1.414" to Color(0xFFFFA000), "90°" to "1.0" to Color(0xFFE64A19)).forEach { (angle, coef, color) -> Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(text = angle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color); Text(text = coef, style = MaterialTheme.typography.bodyLarge, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant) } } } } }
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        CoefficientChip("30°", "0.536", Color(0xFF1976D2))
+                        CoefficientChip("45°", "0.828", Color(0xFF388E3C))
+                        CoefficientChip("60°", "1.414", Color(0xFFFFA000))
+                        CoefficientChip("90°", "1.0", Color(0xFFE64A19))
+                    }
+                }
+            }
             items(viewModel.getQuickCoefficients()) { formula -> FormulaCard(formula = formula) }
             item { Spacer(modifier = Modifier.height(8.dp)); SectionTitle(title = "现场测量画线流程", subtitle = "Field Measurement Guide") }
-            item { Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { listOf("测量桥架宽度W和边高H", "确定弯头角度α（30°/45°/60°/90°）", "根据现场空间确定水平距离b", "计算底边X = b × tan(α/2)", "在桥架上标记折弯位置", "沿线切割并折弯成型").forEachIndexed { i, step -> Row(verticalAlignment = Alignment.Top) { Box(modifier = Modifier.size(24.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) { Text(text = "${i+1}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.White) }; Spacer(modifier = Modifier.width(12.dp)); Text(text = step, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 2.dp)) } } } } }
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StepItem(1, "测量桥架宽度W和边高H")
+                        StepItem(2, "确定弯头角度α（30°/45°/60°/90°）")
+                        StepItem(3, "根据现场空间确定水平距离b")
+                        StepItem(4, "计算底边X = b × tan(α/2)")
+                        StepItem(5, "在桥架上标记折弯位置")
+                        StepItem(6, "沿线切割并折弯成型")
+                    }
+                }
+            }
             item { Spacer(modifier = Modifier.height(32.dp)) }
         }
     }
 }
 
 @Composable
-private fun SectionTitle(title: String, subtitle: String) { Column { Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary); Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline) } }
+private fun SectionTitle(title: String, subtitle: String) {
+    Column { Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary); Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline) }
+}
 
 @Composable
 private fun FormulaCard(formula: FormulaViewModel.FormulaItem) {
@@ -50,4 +72,14 @@ private fun FormulaCard(formula: FormulaViewModel.FormulaItem) {
             Column(modifier = Modifier.weight(1f)) { Text(text = formula.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium); Text(text = formula.formula, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary); Text(text = formula.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
+}
+
+@Composable
+private fun CoefficientChip(angle: String, coef: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(text = angle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color); Text(text = coef, style = MaterialTheme.typography.bodyLarge, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+}
+
+@Composable
+private fun StepItem(step: Int, text: String) {
+    Row(verticalAlignment = Alignment.Top) { Box(modifier = Modifier.size(24.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) { Text(text = step.toString(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.White) }; Spacer(modifier = Modifier.width(12.dp)); Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 2.dp)) }
 }
