@@ -94,23 +94,16 @@ private fun SettingsSection(title: String) { Text(text = title, style = Material
 
 @Composable
 private fun UnitChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.clickable(onClick = onClick), shape = RoundedCornerShape(8.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant, border = if (selected) ButtonDefaults.outlinedButtonBorder(true) else null) {
+    Surface(modifier = modifier.clickable(onClick = onClick), shape = RoundedCornerShape(8.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant) {
         Text(text = label, modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp), style = MaterialTheme.typography.bodySmall, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
 private fun ColorOption(color: Color, selected: Boolean, onClick: () -> Unit) {
+    val borderModifier = if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier
     Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(color)
-            .then(
-                if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                else Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
-            )
-            .clickable(onClick = onClick),
+        modifier = Modifier.size(48.dp).clip(CircleShape).background(color).then(borderModifier).clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         if (selected) Icon(Icons.Default.Check, contentDescription = "选中", tint = if (color == Color.White) Color.Black else Color.White, modifier = Modifier.size(24.dp))
