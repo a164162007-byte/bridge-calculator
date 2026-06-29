@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">桥架弯头计算器</string>
+    <string name="app_name">桥架计算器</string>
+    <string name="home_title">桥架弯头计算器</string>
+    <string name="search_hint">搜索弯头类型…</string>
 </resources>
