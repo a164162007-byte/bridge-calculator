@@ -2,7 +2,9 @@ package com.bridge.calculator.core.elbow
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.math.tan
 
 /**
@@ -100,12 +102,13 @@ object FormulaEngine {
         val l1 = calcHypotenuse(params.distance1, params.angle1)
         val x2 = calcBottomX(params.distance2, params.angle2)
         val l2 = calcHypotenuse(params.distance2, params.angle2)
+        val totalHeight = params.height * 2  // 用height字段代替
         return listOf(
             CalcResult("第一段底边", x1, "mm"),
             CalcResult("第一段斜边", l1, "mm"),
             CalcResult("第二段底边", x2, "mm"),
             CalcResult("第二段斜边", l2, "mm"),
-            CalcResult("总高度", params.height1 + params.height2, "mm")
+            CalcResult("总高度", totalHeight, "mm")
         )
     }
     

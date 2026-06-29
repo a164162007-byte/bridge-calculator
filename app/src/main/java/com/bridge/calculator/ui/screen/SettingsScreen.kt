@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bridge.calculator.ui.viewmodel.SettingsViewModel
@@ -102,13 +101,24 @@ private fun UnitChip(label: String, selected: Boolean, onClick: () -> Unit, modi
 
 @Composable
 private fun ColorOption(color: Color, selected: Boolean, onClick: () -> Unit) {
-    Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(color).then(if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(color)
+            .then(
+                if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                else Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
         if (selected) Icon(Icons.Default.Check, contentDescription = "选中", tint = if (color == Color.White) Color.Black else Color.White, modifier = Modifier.size(24.dp))
     }
 }
 
 @Composable
-private fun AboutItem(icon: ImageVector, title: String, value: String) {
+private fun AboutItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Row(verticalAlignment = Alignment.CenterVertically) { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)); Spacer(modifier = Modifier.width(12.dp)); Text(text = title, style = MaterialTheme.typography.bodyMedium) }
         Text(text = value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
