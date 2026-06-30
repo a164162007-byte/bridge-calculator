@@ -46,8 +46,22 @@ fun BridgeCalculatorApp() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) { HomeScreen(onNavigateToCategory = { navController.navigate(NavRoutes.categoryList(it)) }, onNavigateToElbow = { navController.navigate(NavRoutes.elbowDetail(it.id)) }, onNavigateToFormula = { navController.navigate(NavRoutes.FORMULA) }, onNavigateToSettings = { navController.navigate(NavRoutes.SETTINGS) }) }
-        composable(NavRoutes.CATEGORY_LIST) { backStackEntry -> val categoryName = backStackEntry.arguments?.getString("categoryName") ?: return@composable; val category = ElbowCategory.valueOf(categoryName); CategoryListScreen(category = category, onBack = { navController.popBackStack() }, onElbowClick = { navController.navigate(NavRoutes.elbowDetail(it.id)) }) }
-        composable(NavRoutes.ELBOW_DETAIL) { backStackEntry -> val elbowId = backStackEntry.arguments?.getInt("elbowId") ?: return@composable; val elbow = ElbowRegistry.getById(elbowId) ?: return@composable; ElbowDetailScreen(elbowSpec = elbow, onBack = { navController.popBackStack() }) }
+        composable(
+            route = NavRoutes.CATEGORY_LIST,
+            arguments = listOf(navArgument("categoryName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: return@composable
+            val category = runCatching { ElbowCategory.valueOf(categoryName) }.getOrNull() ?: return@composable
+            CategoryListScreen(category = category, onBack = { navController.popBackStack() }, onElbowClick = { navController.navigate(NavRoutes.elbowDetail(it.id)) })
+        }
+        composable(
+            route = NavRoutes.ELBOW_DETAIL,
+            arguments = listOf(navArgument("elbowId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val elbowId = backStackEntry.arguments?.getInt("elbowId") ?: return@composable
+            val elbow = ElbowRegistry.getById(elbowId) ?: return@composable
+            ElbowDetailScreen(elbowSpec = elbow, onBack = { navController.popBackStack() })
+        }
         composable(NavRoutes.FORMULA) { FormulaScreen(onBack = { navController.popBackStack() }) }
         composable(NavRoutes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
     }
