@@ -34,10 +34,12 @@ android {
     buildFeatures { compose = true; buildConfig = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.4" }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    // SceneView-Filament 用 64-bit Math
+    packaging { jniLibs { useLegacyPackaging = false } }
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.02.02")
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom); androidTestImplementation(composeBom)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
@@ -48,6 +50,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    // 真 3D 渲染 (Google Filament 引擎)
+    implementation("io.github.sceneview:sceneview:2.2.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
