@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.bridge.calculator.core.elbow.CalcParams
 import com.bridge.calculator.core.elbow.ModelType
 import io.github.sceneview.Scene
