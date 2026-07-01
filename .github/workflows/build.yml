@@ -51,21 +51,22 @@ jobs:
         with:
           name: Bridge Calculator v${{ steps.get_version.outputs.version }}
           body: |
-            ## 桥架弯头计算器 v${{ steps.get_version.outputs.version }}
+            ## 桥架弯头计算器 v${{ steps.get_version.outputs.version }}（真 3D 渲染版）
 
-            ### 主要功能
-            - 68种弯头做法全覆盖
-            - 实时3D渲染（基于Google Filament）
-            - 完全离线使用
-            - 万能公式 + 速算系数
-            - 多层/多列偏移计算
+            ### 新版亮点
+            - **真 3D 实时渲染**：基于 SceneView 2.2.1 + Google Filament 引擎，OpenGL ES 真 3D
+            - **6 种核心弯头程序化建模**：爬坡 / 水平 / 三通 / 变径 / 组合翻弯 / 折角
+            - **触摸交互**：双指缩放 + 单指拖动旋转视角
+            - **68 种弯头做法全覆盖**：万能公式 + 速算系数 + 多层多列偏移
+            - **完全离线**：无网络依赖，所有计算本地完成
 
             ### 下载
-            请下载下方的 `app-debug.apk` 文件，在Android设备上安装。
+            请下载下方的 `app-debug.apk` 文件（约 45MB），在 Android 设备上安装。
 
             ### 系统要求
             - Android 8.0+ (API 26+)
-            - 约 30MB 存储空间
+            - 约 60MB 存储空间（Filament 原生库较大）
+            - 支持 64 位 (arm64-v8a) 设备
           files: app/build/outputs/apk/debug/*.apk
           generate_release_notes: true
         env:
