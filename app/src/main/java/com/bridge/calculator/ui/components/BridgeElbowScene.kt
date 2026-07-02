@@ -22,16 +22,17 @@ import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberNode
 import io.github.sceneview.rememberNodes
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.math.PI
 
 /**
- * 真 3D 弯头场景（基于 SceneView 2.2.1 + Google Filament 引擎）
+ * 真 3D 弯头场景 — 视觉风格严格对齐"陈工桥架计算器"
  *
- * 视觉风格对齐"陈工桥架计算器"：
- *  - U 形（C 形槽）桥架横截面：底板 + 两侧板 + 翼缘外折
- *  - 浅蓝色金属漆，带阴影投影
+ * 陈工风格关键特征：
+ *  - 明亮天蓝色 U 形桥架（底板 + 两侧板，无外折翼缘）
+ *  - 侧板圆孔：每侧板沿长度方向均匀排列 3 个圆孔
+ *  - 斜接切口面：深灰色薄板表示切割/拼接面
  *  - 混凝土墙 + 浅灰地面作为场景参照
  *  - 6 种核心弯头用程序化几何拼装
  *
@@ -102,20 +103,21 @@ private fun buildSceneNodes(
 
 // ─── 桥架横截面常量（米） ──────────────────────────────────
 private const val WALL_T = 0.0025f      // 桥架钢板厚度 2.5mm
-private const val FLANGE_W = 0.018f     // 翼缘外折宽度 18mm
 
-// ─── 颜色（接近陈工桥架图风格） ───────────────────────────
-private val BRIDGE_BLUE = Color(0.74f, 0.80f, 0.86f)   // 浅蓝灰金属漆
-private val BRIDGE_DARK = Color(0.45f, 0.50f, 0.56f)   // 切口/暗面
-private val GROUND_COLOR = Color(0.88f, 0.88f, 0.90f)  // 浅灰地面
-private val WALL_COLOR = Color(0.62f, 0.62f, 0.65f)    // 混凝土墙
-private val HIGHLIGHT_RED = Color(0.86f, 0.20f, 0.20f) // 切口红色（陈工常用红虚线）
-private val HIGHLIGHT_YELLOW = Color(0.95f, 0.78f, 0.20f) // 底板变径高亮
+// ─── 颜色（对齐陈工桥架图风格） ───────────────────────────
+private val BRIDGE_BLUE = Color(0.70f, 0.85f, 0.95f)       // 明亮天蓝色（陈工主色）
+private val BRIDGE_DARK = Color(0.40f, 0.50f, 0.60f)       // 暗面 / 远端段
+private val CUT_COLOR = Color(0.28f, 0.30f, 0.33f)         // 斜接切口 / 拼接面深灰
+private val HOLE_COLOR = Color(0.10f, 0.10f, 0.12f)        // 圆孔（深灰黑）
+private val HIGHLIGHT_RED = Color(0.90f, 0.15f, 0.15f)     // 折弯高亮红
+private val HIGHLIGHT_YELLOW = Color(0.95f, 0.80f, 0.15f)  // 变径过渡黄
+private val GROUND_COLOR = Color(0.88f, 0.88f, 0.90f)      // 浅灰地面
+private val WALL_COLOR = Color(0.65f, 0.65f, 0.68f)        // 混凝土墙
 
 // ─── 工具函数 ─────────────────────────────────────────────
 
 /**
- * 创建单个 cube 段（钢板/板材）
+ * 创建单个 cube 段（钢板 / 板材 / 圆孔模拟块）
  */
 private fun makePiece(
     engine: com.google.android.filament.Engine,
@@ -141,12 +143,12 @@ private fun makePiece(
 /**
  * 创建 U 形（C 形槽）桥架段。
  *
- * 几何构成（横截面，沿 Y 方向站立，沿 Z 方向延伸长度 L）：
+ * 几何构成（3 件拼装，无外折翼缘 — 对齐陈工风格）：
  *  - 底板：宽 W × 厚 t × 长 L，置于底部
- *  - 左/右翼：高 (H-t) × 厚 t × 长 L，置于两侧
- *  - 左/右翼缘（外折）：宽 FLANGE_W × 厚 t × 长 L，置于顶部外侧（陈工风格关键）
+ *  - 左 / 右侧板：高 (H-t) × 厚 t × 长 L，立于底板两侧
+ *  - 侧板圆孔：每侧板沿长度方向均匀排列 3 个深色小方块模拟
  *
- * @return U 形段的 5 个子 Node
+ * @return U 形段的子 Node 列表（含底板、两侧板、圆孔）
  */
 private fun makeBridgeUSection(
     engine: com.google.android.filament.Engine,
@@ -161,59 +163,63 @@ private fun makeBridgeUSection(
     val h = height
     val t = WALL_T
     val l = length
-    val fl = FLANGE_W
+    val nodes = mutableListOf<Node>()
 
     // 底板（在底部，居中）
-    val base = makePiece(
+    nodes.add(makePiece(
         engine, materialLoader,
         size = Size(w, t, l),
         center = Position(0.0f, -h / 2.0f + t / 2.0f, 0.0f),
         color = color,
         name = "${namePrefix}_base"
-    )
+    ))
 
-    // 左侧板（高度 h - t，从底板顶面到翼缘底面）
-    val leftSide = makePiece(
+    // 左侧板
+    nodes.add(makePiece(
         engine, materialLoader,
         size = Size(t, h - t, l),
         center = Position(-w / 2.0f + t / 2.0f, 0.0f, 0.0f),
         color = color,
         name = "${namePrefix}_leftSide"
-    )
+    ))
 
     // 右侧板
-    val rightSide = makePiece(
+    nodes.add(makePiece(
         engine, materialLoader,
         size = Size(t, h - t, l),
         center = Position(w / 2.0f - t / 2.0f, 0.0f, 0.0f),
         color = color,
         name = "${namePrefix}_rightSide"
-    )
+    ))
 
-    // 左翼缘（顶部外折）
-    val leftFlange = makePiece(
-        engine, materialLoader,
-        size = Size(fl, t, l),
-        center = Position(-w / 2.0f - fl / 2.0f, h / 2.0f - t / 2.0f, 0.0f),
-        color = color,
-        name = "${namePrefix}_leftFlange"
-    )
+    // 侧板圆孔（每侧 3 个，沿 Z 方向均匀分布）
+    val holeSize = Size(0.008f, 0.008f, 0.002f)  // 8mm×8mm×2mm 深色小方块
+    val holeOffsets = listOf(-l / 4.0f, 0.0f, l / 4.0f)
+    for (zOff in holeOffsets) {
+        // 左侧板圆孔（贴在左侧板外侧）
+        nodes.add(makePiece(
+            engine, materialLoader,
+            size = holeSize,
+            center = Position(-w / 2.0f - 0.001f, 0.0f, zOff),
+            color = HOLE_COLOR,
+            name = "${namePrefix}_holeL_${zOff}"
+        ))
+        // 右侧板圆孔（贴在右侧板外侧）
+        nodes.add(makePiece(
+            engine, materialLoader,
+            size = holeSize,
+            center = Position(w / 2.0f + 0.001f, 0.0f, zOff),
+            color = HOLE_COLOR,
+            name = "${namePrefix}_holeR_${zOff}"
+        ))
+    }
 
-    // 右翼缘
-    val rightFlange = makePiece(
-        engine, materialLoader,
-        size = Size(fl, t, l),
-        center = Position(w / 2.0f + fl / 2.0f, h / 2.0f - t / 2.0f, 0.0f),
-        color = color,
-        name = "${namePrefix}_rightFlange"
-    )
-
-    return listOf(base, leftSide, rightSide, leftFlange, rightFlange)
+    return nodes
 }
 
 /**
- * 把 U 形段（5 个子 piece）装到一个父 Node 上，父 Node 设置 position/rotation。
- * 这样多段拼装时数学更简单：每段局部坐标里居中 + 长度沿 -Z 方向。
+ * 把 U 形段装到一个父 Node 上，父 Node 设置 position / rotation。
+ * 多段拼装时数学更简单：每段局部坐标里居中 + 长度沿 -Z 方向。
  */
 private fun placeSegment(
     engine: com.google.android.filament.Engine,
@@ -234,6 +240,29 @@ private fun placeSegment(
     val pieces = makeBridgeUSection(engine, materialLoader, width, height, length, color, namePrefix)
     pieces.forEach { parent.addChildNode(it) }
     return parent
+}
+
+/**
+ * 在两段之间添加斜接切口面（深灰色薄板）。
+ * 位置为两段交界处，旋转角度取两段角度的平均值。
+ */
+private fun addCutFace(
+    engine: com.google.android.filament.Engine,
+    materialLoader: io.github.sceneview.loaders.MaterialLoader,
+    width: Float,
+    height: Float,
+    position: Position,
+    rotation: Rotation = Rotation(),
+    thickness: Float = 0.003f
+): CubeNode {
+    return makePiece(
+        engine, materialLoader,
+        size = Size(width, height, thickness),
+        center = position,
+        rotation = rotation,
+        color = CUT_COLOR,
+        name = "cut_face"
+    )
 }
 
 // ─── 场景参照（地面 + 墙） ─────────────────────────────────
@@ -265,7 +294,7 @@ private fun buildEnvironment(
 
 // ─── 6 种核心弯头 builder ─────────────────────────────────
 
-/** 1. 爬坡弯头 (RAMP) - 绕 X 轴俯仰，对齐陈工 1.webp */
+/** 1. 爬坡弯头 (RAMP) — 绕 X 轴俯仰，对齐陈工 1.webp */
 private fun buildRampNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -276,33 +305,48 @@ private fun buildRampNodes(
     val alphaRad = (params.angle * PI / 180.0).toFloat().coerceAtLeast(0.001f)
     val segLen = 0.40f
 
+    val nodes = mutableListOf<Node>()
+
+    // 入口段（水平）
     val entry = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
         position = Position(0.0f, 0.0f, -segLen / 2.0f),
         namePrefix = "ramp_entry"
     )
+    nodes.add(entry)
 
+    // 斜接切口面（两段交界处）
+    val cutAlpha = -alphaRad / 2.0f
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = w, height = h,
+        position = Position(0.0f, 0.0f, 0.0f),
+        rotation = Rotation(x = cutAlpha * 180.0f / PI.toFloat())
+    ))
+
+    // 出口段（倾斜）
     val sinA = sin(alphaRad)
     val cosA = cos(alphaRad)
     val exitPos = Position(
         0.0f,
         (segLen / 2.0f) * sinA,
-        -segLen + (segLen / 2.0f) * cosA
+        -(segLen / 2.0f) * cosA
     )
     val exitRot = Rotation(x = -alphaRad * 180.0f / PI.toFloat())
     val exit = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
         position = exitPos, rotation = exitRot,
-        color = BRIDGE_DARK,  // 出口段暗一档，呼应陈工的"切割后"效果
+        color = BRIDGE_DARK,
         namePrefix = "ramp_exit"
     )
+    nodes.add(exit)
 
-    return listOf(entry, exit)
+    return nodes
 }
 
-/** 2. 水平弯头 (HORIZONTAL) - 绕 Y 轴偏航，对齐陈工 4.webp */
+/** 2. 水平弯头 (HORIZONTAL) — 绕 Y 轴偏航，对齐陈工 4.webp */
 private fun buildHorizontalNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -313,17 +357,31 @@ private fun buildHorizontalNodes(
     val alphaRad = (params.angle * PI / 180.0).toFloat().coerceAtLeast(0.001f)
     val segLen = 0.40f
 
+    val nodes = mutableListOf<Node>()
+
+    // 入口段
     val entry = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
         position = Position(segLen / 2.0f, 0.0f, 0.0f),
         namePrefix = "horiz_entry"
     )
+    nodes.add(entry)
 
+    // 斜接切口面
+    val cutBeta = -alphaRad / 2.0f
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = w, height = h,
+        position = Position(0.0f, 0.0f, 0.0f),
+        rotation = Rotation(y = cutBeta * 180.0f / PI.toFloat())
+    ))
+
+    // 出口段
     val sinA = sin(alphaRad)
     val cosA = cos(alphaRad)
     val exitPos = Position(
-        segLen + (segLen / 2.0f) * cosA,
+        (segLen / 2.0f) * cosA,
         0.0f,
         (segLen / 2.0f) * sinA
     )
@@ -335,11 +393,12 @@ private fun buildHorizontalNodes(
         color = BRIDGE_DARK,
         namePrefix = "horiz_exit"
     )
+    nodes.add(exit)
 
-    return listOf(entry, exit)
+    return nodes
 }
 
-/** 3. 三通 (TEE) - 主路 + 支路，支路带斜切口，对齐陈工 22.webp / 47.webp */
+/** 3. 三通 (TEE) — 主管 + 支路，支路从侧面伸出，对齐陈工 22.webp */
 private fun buildTeeNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -352,20 +411,21 @@ private fun buildTeeNodes(
     val branchW = w * 0.55f
     val branchH = h * 0.55f
 
+    val nodes = mutableListOf<Node>()
+
+    // 主管（沿 Z 轴延伸，U 形开口朝 +Y）
     val main = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = mainLen,
         position = Position(0.0f, 0.0f, 0.0f),
         namePrefix = "tee_main"
     )
+    nodes.add(main)
 
-    // 支路沿 +Y 方向（顶部开口朝上），从主路顶部延伸
-    val branchPos = Position(
-        0.0f,
-        h / 2.0f + branchLen / 2.0f,
-        0.0f
-    )
-    val branchRot = Rotation(x = 90.0f)  // 局部 Z 转向 -Y（实际想让段沿 +Y 延伸）
+    // 支路（从主管右侧面伸出，沿 +X 轴延伸，U 形开口仍朝 +Y）
+    // rotation.y = -90° 让段的长度方向从 -Z 转到 +X
+    val branchPos = Position(w / 2.0f + branchLen / 2.0f, 0.0f, 0.0f)
+    val branchRot = Rotation(y = -90.0f)
     val branch = placeSegment(
         engine, materialLoader,
         width = branchW, height = branchH, length = branchLen,
@@ -373,11 +433,20 @@ private fun buildTeeNodes(
         color = BRIDGE_DARK,
         namePrefix = "tee_branch"
     )
+    nodes.add(branch)
 
-    return listOf(main, branch)
+    // 支路与主管连接处的斜接面
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = branchW, height = branchH,
+        position = Position(w / 2.0f, 0.0f, 0.0f),
+        rotation = Rotation(y = -45.0f)
+    ))
+
+    return nodes
 }
 
-/** 4. 变径 (REDUCING) - 大 U → 小 U，对齐陈工 25.webp / 26.webp（梯形漏斗过渡） */
+/** 4. 变径 (REDUCING) — 大 U → 小 U，中间黄色过渡，对齐陈工 25.webp / 26.webp */
 private fun buildReducingNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -390,14 +459,18 @@ private fun buildReducingNodes(
     val segLen = 0.30f
     val midLen = 0.20f
 
+    val nodes = mutableListOf<Node>()
+
+    // 入口段（大）
     val entry = placeSegment(
         engine, materialLoader,
         width = w1, height = h1, length = segLen,
         position = Position(0.0f, 0.0f, -segLen / 2.0f - midLen / 2.0f),
         namePrefix = "red_entry"
     )
+    nodes.add(entry)
 
-    // 中间段：底板用黄色高亮（陈工风格），侧板用蓝色
+    // 中间过渡段（黄色高亮）
     val midW = (w1 + w2) / 2.0f
     val midH = (h1 + h2) / 2.0f
     val mid = placeSegment(
@@ -407,19 +480,36 @@ private fun buildReducingNodes(
         color = HIGHLIGHT_YELLOW,
         namePrefix = "red_mid"
     )
+    nodes.add(mid)
 
+    // 斜接面 1（入口→中间）
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = (w1 + midW) / 2.0f, height = (h1 + midH) / 2.0f,
+        position = Position(0.0f, 0.0f, -midLen / 2.0f)
+    ))
+
+    // 出口段（小）
     val exit = placeSegment(
         engine, materialLoader,
         width = w2, height = h2, length = segLen,
-        position = Position(0.0f, 0.0f, segLen / 2.0f + midLen / 2.0f),
+        position = Position(0.0f, 0.0f, midLen / 2.0f + segLen / 2.0f),
         color = BRIDGE_DARK,
         namePrefix = "red_exit"
     )
+    nodes.add(exit)
 
-    return listOf(entry, mid, exit)
+    // 斜接面 2（中间→出口）
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = (midW + w2) / 2.0f, height = (midH + h2) / 2.0f,
+        position = Position(0.0f, 0.0f, midLen / 2.0f)
+    ))
+
+    return nodes
 }
 
-/** 5. 组合翻弯 (COMPOSITE) - 多段折线，对齐陈工 11.webp (S型) / 67.webp (一体弯) */
+/** 5. 组合翻弯 (COMPOSITE) — 多段折线，红色折弯高亮，对齐陈工 11.webp / 67.webp */
 private fun buildCompositeNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -431,25 +521,54 @@ private fun buildCompositeNodes(
     val a2Rad = (params.angle2 * PI / 180.0).toFloat().coerceAtLeast(0.001f)
     val segLen = 0.30f
 
+    val nodes = mutableListOf<Node>()
+
+    // 第 0 段（水平入口）
     val seg0 = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
-        position = Position(0.0f, 0.0f, -segLen / 2.0f - segLen),
+        position = Position(0.0f, 0.0f, -segLen - segLen / 2.0f),
         namePrefix = "comp_seg0"
     )
+    nodes.add(seg0)
 
+    // 斜接面 1
+    val cut1Alpha = -a1Rad / 2.0f
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = w, height = h,
+        position = Position(0.0f, 0.0f, -segLen / 2.0f),
+        rotation = Rotation(x = cut1Alpha * 180.0f / PI.toFloat())
+    ))
+
+    // 第 1 段（第一次折弯，红色高亮）
     val seg1Pos = Position(0.0f, 0.0f, -segLen / 2.0f)
     val seg1Rot = Rotation(x = -a1Rad * 180.0f / PI.toFloat())
     val seg1 = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
         position = seg1Pos, rotation = seg1Rot,
-        color = HIGHLIGHT_RED,  // 折弯段红色（陈工风格切口线）
+        color = HIGHLIGHT_RED,
         namePrefix = "comp_seg1"
     )
+    nodes.add(seg1)
 
-    val seg2Pos = Position(0.0f, (segLen / 2.0f) * sin(a2Rad), segLen / 2.0f)
-    val seg2Rot = Rotation(x = a2Rad * 180.0f / PI.toFloat())
+    // 斜接面 2
+    val cut2Alpha = (-a1Rad + a2Rad) / 2.0f
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = w, height = h,
+        position = Position(0.0f, (segLen / 2.0f) * sin(a1Rad), segLen / 2.0f),
+        rotation = Rotation(x = cut2Alpha * 180.0f / PI.toFloat())
+    ))
+
+    // 第 2 段（第二次折弯，红色高亮）
+    val seg2Pos = Position(
+        0.0f,
+        (segLen / 2.0f) * sin(a1Rad) + (segLen / 2.0f) * sin(a2Rad - a1Rad),
+        (segLen / 2.0f) * cos(a1Rad) + (segLen / 2.0f) * cos(a2Rad - a1Rad)
+    )
+    val seg2Rot = Rotation(x = -(a1Rad - a2Rad) * 180.0f / PI.toFloat())
     val seg2 = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
@@ -457,11 +576,12 @@ private fun buildCompositeNodes(
         color = HIGHLIGHT_RED,
         namePrefix = "comp_seg2"
     )
+    nodes.add(seg2)
 
-    return listOf(seg0, seg1, seg2)
+    return nodes
 }
 
-/** 6. 折角 (FOLDED) - 较小角度的 2 段折线，对齐陈工 7-10.webp (45°组成90°) */
+/** 6. 折角 (FOLDED) — 较小角度的 2 段折线，对齐陈工 7-10.webp */
 private fun buildFoldedNodes(
     engine: com.google.android.filament.Engine,
     materialLoader: io.github.sceneview.loaders.MaterialLoader,
@@ -472,13 +592,27 @@ private fun buildFoldedNodes(
     val alphaRad = (params.angle * PI / 180.0).toFloat().coerceAtLeast(0.001f)
     val segLen = 0.45f
 
+    val nodes = mutableListOf<Node>()
+
+    // 入口段
     val entry = placeSegment(
         engine, materialLoader,
         width = w, height = h, length = segLen,
         position = Position(0.0f, 0.0f, -segLen / 2.0f - segLen / 2.0f),
         namePrefix = "fold_entry"
     )
+    nodes.add(entry)
 
+    // 斜接面
+    val cutAlpha = -alphaRad / 2.0f
+    nodes.add(addCutFace(
+        engine, materialLoader,
+        width = w, height = h,
+        position = Position(0.0f, 0.0f, -segLen / 2.0f),
+        rotation = Rotation(x = cutAlpha * 180.0f / PI.toFloat())
+    ))
+
+    // 出口段
     val sinA = sin(alphaRad)
     val cosA = cos(alphaRad)
     val exitPos = Position(
@@ -494,6 +628,7 @@ private fun buildFoldedNodes(
         color = BRIDGE_DARK,
         namePrefix = "fold_exit"
     )
+    nodes.add(exit)
 
-    return listOf(entry, exit)
+    return nodes
 }

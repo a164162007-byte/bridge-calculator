@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.bridge.calculator.core.elbow.*
-import com.bridge.calculator.ui.components.BridgeElbowScene
+import com.bridge.calculator.ui.components.CuttingDiagramView
 import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,10 +35,7 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
             item {
                 Card(modifier = Modifier.fillMaxWidth().height(300.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        BridgeElbowScene(params = viewModel.params, modelType = elbowSpec.modelType, modifier = Modifier.fillMaxSize())
-                        Surface(modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp), shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)) {
-                            Text(text = "双指缩放 · 单指拖动旋转", modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        CuttingDiagramView(params = viewModel.params, modelType = elbowSpec.modelType, modifier = Modifier.fillMaxSize())
                     }
                 }
             }
