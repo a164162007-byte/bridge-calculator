@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -172,16 +173,15 @@ private fun DrawScope.drawDimLine(
 
     // 文字标签
     val mid = Offset((s.x + e.x) / 2f, (s.y + e.y) / 2f)
-    drawContext.canvas.nativeCanvas.apply {
-        val paint = android.graphics.Paint().apply {
-            color = labelColor.hashCode()
-            textSize = 14f * density
-            isAntiAlias = true
-            isFakeBoldText = true
-            textAlign = android.graphics.Paint.Align.CENTER
-        }
-        drawText(label, mid.x, mid.y - 6f, paint)
+    val nativeCanvas = drawContext.canvas.nativeCanvas
+    val paint = android.graphics.Paint().apply {
+        setColor(labelColor.toArgb())
+        textSize = 14f * density
+        isAntiAlias = true
+        isFakeBoldText = true
+        textAlign = android.graphics.Paint.Align.CENTER
     }
+    nativeCanvas.drawText(label, mid.x, mid.y - 6f, paint)
 }
 
 private fun DrawScope.drawArrowHead(from: Offset, to: Offset, color: Color, size: Float) {
@@ -205,16 +205,16 @@ private fun DrawScope.drawArrowHead(from: Offset, to: Offset, color: Color, size
     drawPath(path, color)
 }
 
-private fun DrawScope.drawLabel(text: String, position: Offset, color: Color = LINE_BLUE) {
-    drawContext.canvas.nativeCanvas.apply {
-        val paint = android.graphics.Paint().apply {
-            color = color.hashCode()
-            textSize = 13f * density
-            isAntiAlias = true
-            textAlign = android.graphics.Paint.Align.CENTER
-        }
-        drawText(text, position.x, position.y, paint)
+private fun DrawScope.drawLabel(text: String, position: Offset, labelColor: Color = LINE_BLUE) {
+    val paintColor = labelColor.toArgb()
+    val nativeCanvas = drawContext.canvas.nativeCanvas
+    val paint = android.graphics.Paint().apply {
+        setColor(paintColor)
+        textSize = 13f * density
+        isAntiAlias = true
+        textAlign = android.graphics.Paint.Align.CENTER
     }
+    nativeCanvas.drawText(text, position.x, position.y, paint)
 }
 
 /** 格式化 mm 值为 cm（对齐陈工的 cm 单位显示） */
