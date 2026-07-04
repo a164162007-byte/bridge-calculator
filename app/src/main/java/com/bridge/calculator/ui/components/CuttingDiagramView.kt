@@ -119,7 +119,7 @@ private fun getR(results: List<CalcResult>, name: String): Double =
 // ─── 工具函数 ─────────────────────────────────────────────
 
 /** mm 转 cm，3位小数 */
-private fun fmtCm(mm: Double): String = "%.3f cm".format(mm / 10.0)
+private fun fmtCm(mm: Float): String = "%.3f cm".format(mm / 10f)
 
 /** 计算缩放因子 */
 private fun calcScale(availablePx: Float, maxMm: Float): Float =
@@ -275,7 +275,7 @@ private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResu
     // 底边（水平距离 b）
     drawDim(
         sideProfile[0], sideProfile[1],
-        fmtCm(b.toDouble()), offsetPx = 22f
+        fmtCm(b), offsetPx = 22f
     )
     // 左侧高（爬坡高度）
     drawDim(
@@ -319,12 +319,12 @@ private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResu
     // 底边（桥架宽度 W）
     drawDim(
         expandShape[0], expandShape[1],
-        fmtCm(W.toDouble()), offsetPx = 22f
+        fmtCm(W), offsetPx = 22f
     )
     // 左侧斜边
     drawDim(
         expandShape[0], expandShape[3],
-        "斜边 ${fmtCm(diagLen.toDouble())}", offsetPx = -22f
+        "斜边 ${fmtCm(diagLen)}", offsetPx = -22f
     )
     // 下料长度（斜边 L = b/sin(α)）
     drawDim(
@@ -391,12 +391,12 @@ private fun DrawScope.drawHorizontalDiagram(params: CalcParams, results: List<Ca
     drawDim(
         Offset(centerX - shapeW * 0.15f - shapeW / 2f, centerY - shapeH),
         Offset(centerX - shapeW * 0.15f, centerY - shapeH),
-        fmtCm(W.toDouble()), offsetPx = -22f
+        fmtCm(W), offsetPx = -22f
     )
     drawDim(
         Offset(centerX - shapeW * 0.15f, centerY - shapeH),
         Offset(centerX - shapeW * 0.15f, centerY + shapeH),
-        fmtCm(b.toDouble()), offsetPx = -22f
+        fmtCm(b), offsetPx = -22f
     )
     drawDim(
         leftTrap[3], leftTrap[0],
@@ -454,12 +454,12 @@ private fun DrawScope.drawTeeDiagram(params: CalcParams, results: List<CalcResul
     // 尺寸标注
     drawDim(
         mainRect[0], mainRect[1],
-        "主管 ${fmtCm(W.toDouble())}", offsetPx = -22f
+        "主管 ${fmtCm(W)}", offsetPx = -22f
     )
     drawDim(
         Offset(centerX - branchW / 2f, centerY + mainH + funnelH),
         Offset(centerX + branchW / 2f, centerY + mainH + funnelH),
-        "支管 ${fmtCm(W * 0.5)}", offsetPx = 22f
+        "支管 ${fmtCm(W * 0.5f)}", offsetPx = 22f
     )
     drawDim(
         funnel[0], funnel[3],
@@ -511,9 +511,9 @@ private fun DrawScope.drawReducingDiagram(params: CalcParams, results: List<Calc
     drawAnnotation("变径展开图", centerX, centerY + hpx / 2f + 22f * density)
 
     // 尺寸标注
-    drawDim(shape[0], shape[1], "宽 ${fmtCm(w1.toDouble())}", offsetPx = -22f)
-    drawDim(shape[2], shape[3], "宽 ${fmtCm(w2.toDouble())}", offsetPx = 22f)
-    drawDim(shape[0], shape[3], "高 ${fmtCm(H.toDouble())}", offsetPx = -22f)
+    drawDim(shape[0], shape[1], "宽 ${fmtCm(w1)}", offsetPx = -22f)
+    drawDim(shape[2], shape[3], "宽 ${fmtCm(w2)}", offsetPx = 22f)
+    drawDim(shape[0], shape[3], "高 ${fmtCm(H)}", offsetPx = -22f)
     drawDim(shape[1], shape[2], "斜边 ${fmtCm(hypL)}", offsetPx = -22f)
 }
 
@@ -570,8 +570,8 @@ private fun DrawScope.drawCompositeDiagram(params: CalcParams, results: List<Cal
     drawAnnotation("组合翻弯展开图", centerX, centerY + 22f * density)
 
     // 尺寸标注
-    drawDim(seg1[0], seg1[1], "第1段 ${fmtCm(b1.toDouble())}", offsetPx = 22f)
-    drawDim(seg2[0], seg2[1], "第2段 ${fmtCm(b2.toDouble())}", offsetPx = 22f)
+    drawDim(seg1[0], seg1[1], "第1段 ${fmtCm(b1)}", offsetPx = 22f)
+    drawDim(seg2[0], seg2[1], "第2段 ${fmtCm(b2)}", offsetPx = 22f)
     drawDim(
         Offset(centerX, centerY), Offset(centerX, centerY - s1h),
         "高 ${fmtCm(h1)}", offsetPx = -22f
@@ -624,7 +624,7 @@ private fun DrawScope.drawFoldedDiagram(params: CalcParams, results: List<CalcRe
     drawAnnotation("折角展开图", centerX, centerY + hw / 2f + 22f * density)
 
     // 尺寸标注
-    drawDim(shape[0], shape[1], "下料 ${fmtCm(b.toDouble())}", offsetPx = 22f)
+    drawDim(shape[0], shape[1], "下料 ${fmtCm(b)}", offsetPx = 22f)
     drawDim(shape[0], shape[5], fmtCm(riseH), offsetPx = -22f)
     drawDim(
         Offset(centerX, centerY), Offset(centerX + bw / 2f, centerY),
