@@ -224,14 +224,13 @@ private fun DrawScope.drawAnnotation(text: String, x: Float, y: Float, color: Co
 private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResult>) {
     val W = params.width.toFloat()        // 桥架宽度
     val b = params.distance.toFloat()     // 水平距离
-    val angle = params.angle
-    val aRad = angle * PI.toFloat() / 180f
+    val aRad = params.angle.toFloat() * PI.toFloat() / 180f
 
-    // 核心计算值
-    val baseX = (b * tan(aRad / 2f)).toDouble()    // 底边 X
-    val hypL = (b / sin(aRad)).toDouble()           // 斜边 L
-    val riseH = (b * tan(aRad)).toDouble()          // 爬坡高度
-    val cutW = (hypL * sin(aRad / 2f)).toDouble()   // 切口宽
+    // 核心计算值（全部 Float）
+    val baseX = b * tan(aRad / 2f)        // 底边 X
+    val hypL = b / sin(aRad)              // 斜边 L
+    val riseH = b * tan(aRad)             // 爬坡高度
+    val cutW = hypL * sin(aRad / 2f)      // 切口宽
 
     val cw = size.width
     val ch = size.height
@@ -249,12 +248,12 @@ private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResu
     // ══════════════════════════════════════
     // 左侧：侧面轮廓（直角梯形）
     // ═══════════════════════════════════════
-    val maxLeft = maxOf(b, riseH).toFloat()
+    val maxLeft = maxOf(b, riseH)
     val scLeft = calcScale(minOf(leftAreaW - 30f, ch - pad * 2), maxLeft)
 
     val lw = b * scLeft      // 底边像素
     val lh = riseH * scLeft  // 高度像素
-    val lx = baseX.toFloat() * scLeft  // 底边差像素
+    val lx = baseX * scLeft  // 底边差像素
 
     // 直角梯形：左下→右下→右上(缩进)→左上
     val sideProfile = listOf(
@@ -292,7 +291,7 @@ private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResu
     // ═══════════════════════════════════════
     // 右侧：展开切割图（平行四边形）
     // ═══════════════════════════════════════
-    val diagLen = sqrt((W * W + b * b).toDouble()).toFloat()  // 展开图对角线
+    val diagLen = sqrt(W * W + b * b)  // 展开图对角线
     val maxRight = maxOf(diagLen, b)
     val scRight = calcScale(minOf(rightAreaW - 30f, ch - pad * 2), maxRight)
 
@@ -340,12 +339,11 @@ private fun DrawScope.drawRampDiagram(params: CalcParams, results: List<CalcResu
 private fun DrawScope.drawHorizontalDiagram(params: CalcParams, results: List<CalcResult>) {
     val W = params.width.toFloat()
     val b = params.distance.toFloat()
-    val angle = params.angle
-    val aRad = angle * PI.toFloat() / 180f
+    val aRad = params.angle.toFloat() * PI.toFloat() / 180f
 
-    val baseX = (b * tan(aRad / 2f)).toDouble()
-    val hypL = (b / sin(aRad)).toDouble()
-    val cutW = (hypL * sin(aRad / 2f)).toDouble()
+    val baseX = b * tan(aRad / 2f)
+    val hypL = b / sin(aRad)
+    val cutW = hypL * sin(aRad / 2f)
 
     val cw = size.width
     val ch = size.height
@@ -353,12 +351,12 @@ private fun DrawScope.drawHorizontalDiagram(params: CalcParams, results: List<Ca
     val centerY = ch / 2f
     val pad = 55f
 
-    val maxDim = maxOf(W, b).toFloat()
+    val maxDim = maxOf(W, b)
     val sc = calcScale(minOf(cw - 60f, ch - pad * 2) * 0.85f, maxDim)
 
     val shapeW = W * sc
     val shapeH = (b * 0.5f) * sc  // 半高
-    val cutPx = baseX.toFloat() * sc * 0.5f
+    val cutPx = baseX * sc * 0.5f
 
     // 左梯形展开图
     val leftTrap = listOf(
@@ -476,7 +474,7 @@ private fun DrawScope.drawReducingDiagram(params: CalcParams, results: List<Calc
     val w2 = params.afterWidth.toFloat()
     val H = params.height.toFloat()
     val deltaW = abs(w2 - w1)
-    val hypL = sqrt((deltaW * deltaW + H * H).toDouble())
+    val hypL = sqrt(deltaW * deltaW + H * H)
 
     val cw = size.width
     val ch = size.height
@@ -523,16 +521,14 @@ private fun DrawScope.drawReducingDiagram(params: CalcParams, results: List<Calc
 
 private fun DrawScope.drawCompositeDiagram(params: CalcParams, results: List<CalcResult>) {
     val b1 = params.distance1.toFloat()
-    val a1 = params.angle1
+    val a1Rad = params.angle1.toFloat() * PI.toFloat() / 180f
     val b2 = params.distance2.toFloat()
-    val a2 = params.angle2
-    val a1Rad = a1 * PI.toFloat() / 180f
-    val a2Rad = a2 * PI.toFloat() / 180f
+    val a2Rad = params.angle2.toFloat() * PI.toFloat() / 180f
 
-    val h1 = (b1 * tan(a1Rad)).toDouble()
-    val l1 = (b1 / sin(a1Rad)).toDouble()
-    val h2 = (b2 * tan(a2Rad)).toDouble()
-    val l2 = (b2 / sin(a2Rad)).toDouble()
+    val h1 = b1 * tan(a1Rad)
+    val l1 = b1 / sin(a1Rad)
+    val h2 = b2 * tan(a2Rad)
+    val l2 = b2 / sin(a2Rad)
 
     val cw = size.width
     val ch = size.height
@@ -540,13 +536,13 @@ private fun DrawScope.drawCompositeDiagram(params: CalcParams, results: List<Cal
     val centerY = ch / 2f + 20f
     val pad = 55f
 
-    val maxDim = maxOf(b1 + b2, maxOf(h1, h2)).toFloat()
+    val maxDim = maxOf(b1 + b2, maxOf(h1, h2))
     val sc = calcScale(minOf(cw - 60f, ch - pad * 2) * 0.8f, maxDim)
 
     val s1w = b1 * sc
-    val s1h = h1.toFloat() * sc
+    val s1h = h1 * sc
     val s2w = b2 * sc
-    val s2h = h2.toFloat() * sc
+    val s2h = h2 * sc
 
     // 第一段矩形
     val seg1 = listOf(
@@ -590,12 +586,11 @@ private fun DrawScope.drawCompositeDiagram(params: CalcParams, results: List<Cal
 
 private fun DrawScope.drawFoldedDiagram(params: CalcParams, results: List<CalcResult>) {
     val b = params.distance.toFloat()
-    val angle = params.angle
-    val aRad = angle * PI.toFloat() / 180f
+    val aRad = params.angle.toFloat() * PI.toFloat() / 180f
 
-    val baseX = (b * tan(aRad / 2f)).toDouble()
-    val hypL = (b / sin(aRad)).toDouble()
-    val riseH = (b * tan(aRad)).toDouble()
+    val baseX = b * tan(aRad / 2f)
+    val hypL = b / sin(aRad)
+    val riseH = b * tan(aRad)
 
     val cw = size.width
     val ch = size.height
@@ -603,7 +598,7 @@ private fun DrawScope.drawFoldedDiagram(params: CalcParams, results: List<CalcRe
     val centerY = ch / 2f
     val pad = 55f
 
-    val maxDim = maxOf(b, riseH).toFloat()
+    val maxDim = maxOf(b, riseH)
     val sc = calcScale(minOf(cw - 60f, ch - pad * 2) * 0.8f, maxDim)
 
     val bw = b * sc
