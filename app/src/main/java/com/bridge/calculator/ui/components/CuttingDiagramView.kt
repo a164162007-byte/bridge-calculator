@@ -68,12 +68,12 @@ fun CuttingDiagramView(
         ) {
             withTransform({ rotate(rotationZ, center) }) {
                 when (modelType) {
-                    ModelType.RAMP, ModelType.CUSTOM -> drawRampDiagram(this, params, results)
-                    ModelType.HORIZONTAL -> drawHorizontalDiagram(this, params, results)
-                    ModelType.TEE -> drawTeeDiagram(this, params, results)
-                    ModelType.REDUCING -> drawReducingDiagram(this, params, results)
-                    ModelType.COMPOSITE -> drawCompositeDiagram(this, params, results)
-                    ModelType.FOLDED -> drawFoldedDiagram(this, params, results)
+                    ModelType.RAMP, ModelType.CUSTOM -> drawRampDiagram(params, results)
+                    ModelType.HORIZONTAL -> drawHorizontalDiagram(params, results)
+                    ModelType.TEE -> drawTeeDiagram(params, results)
+                    ModelType.REDUCING -> drawReducingDiagram(params, results)
+                    ModelType.COMPOSITE -> drawCompositeDiagram(params, results)
+                    ModelType.FOLDED -> drawFoldedDiagram(params, results)
                 }
             }
         }
