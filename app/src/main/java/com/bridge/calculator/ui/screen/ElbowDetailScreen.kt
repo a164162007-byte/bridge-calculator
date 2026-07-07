@@ -25,6 +25,7 @@ import com.bridge.calculator.ui.components.BridgeElbowScene
 import com.bridge.calculator.ui.components.CalculationView
 import com.bridge.calculator.ui.components.CuttingDiagramView
 import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
