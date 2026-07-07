@@ -1,5 +1,6 @@
 package com.bridge.calculator.ui.screen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,7 +25,7 @@ import com.bridge.calculator.ui.components.CalculationView
 import com.bridge.calculator.ui.components.CuttingDiagramView
 import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
     val viewModel = remember { ElbowDetailViewModel(elbowSpec) }
@@ -54,7 +55,7 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
                         selected = pagerState.currentPage == index,
-                        onClick = { /* pagerState 自动滚动 */ },
+                        onClick = { pagerState.animateScrollToPage(index) },
                         text = { Text(title, fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }

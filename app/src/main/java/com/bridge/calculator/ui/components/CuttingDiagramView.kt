@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.bridge.calculator.core.elbow.CalcParams
@@ -135,18 +136,6 @@ private fun DrawScope.drawDimV(x: Float, y: Float, label: String) {
 
 private fun DrawScope.drawDimH(x: Float, y: Float, label: String) {
     drawText(label, x, y, Color(0xFF212121), 13f * density, true)
-}
-
-private fun DrawScope.drawText(text: String, x: Float, y: Float, color: Color,
-    textSizePx: Float, bold: Boolean = false) {
-    val canvas = drawContext.canvas.nativeCanvas
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        setColor(color.toArgb())
-        this.textSize = textSizePx
-        textAlign = Paint.Align.CENTER
-        if (bold) isFakeBoldText = true
-    }
-    canvas.drawText(text, x, y, paint)
 }
 
 // ================================================================
