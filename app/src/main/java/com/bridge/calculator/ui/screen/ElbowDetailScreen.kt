@@ -24,6 +24,7 @@ import com.bridge.calculator.core.elbow.*
 import com.bridge.calculator.ui.components.BridgeElbowScene
 import com.bridge.calculator.ui.components.CalculationView
 import com.bridge.calculator.ui.components.CuttingDiagramView
+import com.bridge.calculator.ui.components.CuttingGuideView
 import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
 import kotlinx.coroutines.launch
 
@@ -64,38 +65,41 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                 }
             }
 
-            // 图形区域（固定高度）
-            Card(
-                modifier = Modifier.fillMaxWidth().height(320.dp),
-                shape = RoundedCornerShape(0.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    when (pagerState.currentPage) {
-                        0 -> CalculationView(
-                            params = viewModel.params,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        1 -> CuttingDiagramView(
-                            params = viewModel.params,
-                            modelType = elbowSpec.modelType,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        2 -> BridgeElbowScene(
-                            params = viewModel.params,
-                            modelType = elbowSpec.modelType,
-                            modifier = Modifier.fillMaxSize()
-                        )
+            if (pagerState.currentPage == 1) {
+                // 划线图：全屏施工划线指导
+                CuttingGuideView(
+                    params = viewModel.params,
+                    modelType = elbowSpec.modelType,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // 其他Tab：图形 + 参数
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(320.dp),
+                    shape = RoundedCornerShape(0.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        when (pagerState.currentPage) {
+                            0 -> CalculationView(
+                                params = viewModel.params,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            2 -> BridgeElbowScene(
+                                params = viewModel.params,
+                                modelType = elbowSpec.modelType,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
-            }
 
-            // 下方滚动内容
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+                // 下方滚动内容
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                 item {
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))) {
@@ -138,10 +142,11 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                 item { Text(text = "计算结果", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
                 items(viewModel.results) { result -> ResultCard(result = result) }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
-            }
-        }
-    }
-}
+                }  // LazyColumn
+            }  // else
+        }  // Column
+    }  // Scaffold
+}  // ElbowDetailScreen
 
 @Composable
 private fun ParamInputField(param: ParamDef, value: Double, onValueChange: (Double) -> Unit) {
