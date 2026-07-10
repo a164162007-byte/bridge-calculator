@@ -1,19 +1,15 @@
 package com.bridge.calculator.ui.screen
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,17 +19,14 @@ import androidx.compose.ui.unit.dp
 import com.bridge.calculator.core.elbow.*
 import com.bridge.calculator.ui.components.BridgeElbowScene
 import com.bridge.calculator.ui.components.CalculationView
-import com.bridge.calculator.ui.components.CuttingDiagramView
 import com.bridge.calculator.ui.components.CuttingGuideView
 import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
     val viewModel = remember { ElbowDetailViewModel(elbowSpec) }
-    val pagerState = rememberPagerState(pageCount = { 3 })
-    val coroutineScope = rememberCoroutineScope()
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val tabTitles = listOf("计算图", "划线图", "3D模型")
 
     Scaffold(
@@ -52,15 +45,15 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             // Tab 切换栏
             TabRow(
-                selectedTabIndex = pagerState.currentPage,
+                selectedTabIndex = selectedTab,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
-                        text = { Text(title, fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal) }
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }
             }
@@ -72,7 +65,7 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    when (pagerState.currentPage) {
+                    when (selectedTab) {
                         0 -> CalculationView(
                             params = viewModel.params,
                             modifier = Modifier.fillMaxSize()
