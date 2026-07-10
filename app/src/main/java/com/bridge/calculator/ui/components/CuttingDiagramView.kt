@@ -694,7 +694,8 @@ private fun DrawScope.drawFoldedCutting(params: CalcParams, results: List<CalcRe
 }
 
 // ================================================================
-// 施工划线指导 — 每个面单独展示，详细标注划线尺寸和切割方法
+// 施工划线图 — 对齐陈工桥架计算器
+// 3D透视多面板展开图：侧板+顶板+底板同时展示，红色三角切口+双箭头尺寸标注
 // ================================================================
 
 @Composable
@@ -703,276 +704,464 @@ fun CuttingGuideView(
     modelType: ModelType,
     modifier: Modifier = Modifier
 ) {
-    val scrollState = rememberScrollState()
-    Column(
+    Canvas(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .background(Color(0xFFF5F5F5))
     ) {
-        // 顶部参数摘要
-        val aRad = params.angle * PI / 180.0
-        val notchBaseW = params.width
-        val sideNotchDepth = params.height
-        val bottomNotchDepth = params.width / (2.0 * tan(aRad / 2.0))
-        val bendFromStart = params.distance * tan(aRad / 2.0)
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
-        ) {
-            Column(modifier = Modifier.padding(10.dp)) {
-                Text("切割参数总览", fontWeight = FontWeight.Bold, fontSize = 14.sp,
-                    color = Color(0xFFE65100))
-                Spacer(Modifier.height(4.dp))
-                Text("桥架: W=${params.width.toInt()}mm × H=${params.height.toInt()}mm", fontSize = 12.sp)
-                Text("角度: ${params.angle.toInt()}°", fontSize = 12.sp)
-                Text("切口宽: ${"%.1f".format(notchBaseW / 10.0)}cm", fontSize = 12.sp,
-                    color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
-                Text("侧板切口深: ${"%.1f".format(sideNotchDepth / 10.0)}cm", fontSize = 12.sp,
-                    color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
-                Text("底板切口深: ${"%.1f".format(bottomNotchDepth / 10.0)}cm", fontSize = 12.sp,
-                    color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
-                Text("折弯位距起始: ${"%.1f".format(bendFromStart / 10.0)}cm", fontSize = 12.sp,
-                    color = Color(0xFF1565C0))
-            }
-        }
-
-        // ── 侧板切割图 ──
-        Text("① 侧板（左右两块一样）", fontWeight = FontWeight.Bold, fontSize = 14.sp,
-            color = Color(0xFF1565C0))
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(Color.White)
-                .border(1.dp, Color.LightGray)
-        ) { drawSidePanelGuide(params) }
-
-        Card(modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text("切割步骤：", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("1. 在侧板上量出折弯位置，画一条竖线（蓝色）", fontSize = 11.sp)
-                Text("2. 从折弯位置往左右各量 ${"%.1f".format(notchBaseW / 20.0)}cm，做标记", fontSize = 11.sp, color = Color(0xFFD32F2F))
-                Text("3. 从两个标记点分别画线到底边折弯点（红色V形）", fontSize = 11.sp, color = Color(0xFFD32F2F))
-                Text("4. 沿红色线切掉V形废料，深度=${"%.1f".format(sideNotchDepth / 10.0)}cm", fontSize = 11.sp, color = Color(0xFFD32F2F))
-                Text("5. 左右侧板各切一块，完全一样", fontSize = 11.sp)
-            }
-        }
-
-        // ── 底板切割图 ──
-        Text("② 底板", fontWeight = FontWeight.Bold, fontSize = 14.sp,
-            color = Color(0xFF1565C0))
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(Color.White)
-                .border(1.dp, Color.LightGray)
-        ) { drawBottomPanelGuide(params) }
-
-        Card(modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text("切割步骤：", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("1. 在底板上量出折弯位置，画一条横线（蓝色）", fontSize = 12.sp)
-                Text("2. 在折弯线上量出切口宽度 ${"%.1f".format(notchBaseW / 10.0)}cm，做标记", fontSize = 12.sp, color = Color(0xFFD32F2F))
-                Text("3. 从两个标记点画线交汇到V底点（红色V形）", fontSize = 12.sp, color = Color(0xFFD32F2F))
-                Text("4. V形切口深度 = ${"%.1f".format(bottomNotchDepth / 10.0)}cm", fontSize = 12.sp, color = Color(0xFFD32F2F))
-                Text("5. 沿红色线切掉V形废料", fontSize = 12.sp, color = Color(0xFFD32F2F))
-            }
-        }
-
-        // ── 组装说明 ──
-        Card(modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))) {
-            Column(modifier = Modifier.padding(10.dp)) {
-                Text("③ 组装", fontWeight = FontWeight.Bold, fontSize = 14.sp,
-                    color = Color(0xFF2E7D32))
-                Spacer(Modifier.height(4.dp))
-                Text("1. 把切好的侧板和底板对齐（切口处对接）", fontSize = 12.sp)
-                Text("2. 沿折弯线折起来，角度 = ${params.angle.toInt()}°", fontSize = 12.sp)
-                Text("3. V型切口合拢后正好形成弯头", fontSize = 12.sp)
-                Text("4. 用铆钉或螺栓固定接缝", fontSize = 12.sp)
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
+        drawCuttingGuide3D(params, modelType)
     }
 }
 
-/** 绘制侧板切割图 */
-private fun DrawScope.drawSidePanelGuide(params: CalcParams) {
+/** 绘制完整的3D透视划线图（对齐陈工） */
+private fun DrawScope.drawCuttingGuide3D(params: CalcParams, modelType: ModelType) {
+    val cw = size.width
+    val ch = size.height
+
+    when (modelType) {
+        ModelType.RAMP, ModelType.CUSTOM, ModelType.FOLDED -> drawRampCuttingGuide3D(params, cw, ch)
+        ModelType.HORIZONTAL -> drawHorizontalCuttingGuide3D(params, cw, ch)
+        ModelType.TEE -> drawTeeCuttingGuide3D(params, cw, ch)
+        ModelType.REDUCING -> drawReducingCuttingGuide3D(params, cw, ch)
+        ModelType.COMPOSITE -> drawCompositeCuttingGuide3D(params, cw, ch)
+    }
+}
+
+/** 爬坡弯头 - 3D透视划线图 */
+private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: Float) {
+    val W = params.width.toFloat()   // 桥架宽度 mm
+    val H = params.height.toFloat()  // 桥架边高 mm
+    val b = params.distance.toFloat() // 水平距离 mm
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+
+    // 切割参数
+    val baseX = b * tan(aRad / 2f)     // 起坡距离
+    val cutDepth = W * tan(aRad / 2f)  // 侧板切口深度
+
+    // ── 布局参数 ──
+    val margin = 20f * density
+    val titleH = 18f * density
+
+    // 标题
+    drawText("划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+
+    // ── 上方：侧板展开图（最大区域）──
+    val sideTop = titleH + 8f * density
+    val sideH = ch * 0.35f
+    val sideW = cw - margin * 2f
+    drawSidePanel3D(margin, sideTop, sideW, sideH, params)
+
+    // ── 下方左：底板展开图 ──
+    val bottomTop = sideTop + sideH + 12f * density
+    val bottomH = ch * 0.22f
+    val bottomW = cw * 0.55f
+    drawBottomPanel3D(margin, bottomTop, bottomW, bottomH, params)
+
+    // ── 下方右：3D线框模型 ──
+    val wireX = margin + bottomW + 10f * density
+    val wireW = cw - wireX - margin
+    val wireH = bottomH
+    drawWireframeBentTray(wireX, bottomTop, wireW, wireH, params)
+
+    // ── 最下方：关键尺寸汇总 ──
+    val sumY = bottomTop + bottomH + 10f * density
+    val fontSize = 10f * density
+    drawText("切口宽=${"%.1f".format(W/10f)}cm  深=${"%.1f".format(cutDepth/10f)}cm  起坡=${"%.1f".format(baseX/10f)}cm  角度=${angleDeg.toInt()}°",
+        cw / 2f, sumY, Color(0xFFC62828), fontSize, true)
+}
+
+/** 绘制侧板3D透视展开图 */
+private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
     val W = params.width.toFloat()
     val H = params.height.toFloat()
-    val cw = size.width
-    val ch = size.height
-    val pad = 28f * density
+    val b = params.distance.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
 
-    val panelLenCm = 30f
-    val panelLen = panelLenCm * 10f
-    val scaleX = (cw - pad * 2f) / panelLen
-    val scaleY = (ch - pad * 2f - 20f * density) / H
-    val sc = minOf(scaleX, scaleY)
+    val baseX = b * tan(aRad / 2f)
+    val cutDepth = W * tan(aRad / 2f)
 
-    val drawW = panelLen * sc
-    val drawH = H * sc
-    val ox = (cw - drawW) / 2f
-    val oy = (ch - drawH) / 2f + 10f * density
-
-    // 面板背景
-    drawRect(Color(0xFFD6EAF8), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(drawW, drawH))
-    drawRect(Color(0xFF2980B9), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(drawW, drawH), style = Stroke(width = 2.5f))
-
-    // 折弯线(蓝色虚线)
-    val bendFrac = 0.4f
-    val bendX = ox + drawW * bendFrac
-    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + drawH),
-        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
-    drawText("折弯线", bendX, oy - 4f * density, Color(0xFF1565C0), 10f * density, true)
-
-    // V-notch: 顶边，宽度=W(像素)，顶点在底边折弯点
-    val halfBasePx = (W / 2f) * sc
-    val vLeft = Offset(bendX - halfBasePx, oy)
-    val vRight = Offset(bendX + halfBasePx, oy)
-    val vBottom = Offset(bendX, oy + drawH)
-
-    // 红色V形
-    val notchPath = Path().apply {
-        moveTo(vLeft.x, vLeft.y)
-        lineTo(vBottom.x, vBottom.y)
-        lineTo(vRight.x, vRight.y)
-    }
-    drawPath(notchPath, Color(0xFFE74C3C), style = Stroke(width = 3f))
-
-    // 填充切口区域(浅红)
-    val fillPath = Path().apply {
-        moveTo(vLeft.x, vLeft.y)
-        lineTo(vBottom.x, vBottom.y)
-        lineTo(vRight.x, vRight.y)
+    // 侧板矩形（3D透视效果：稍微倾斜）
+    val skew = h * 0.12f  // 透视偏移
+    val panelPath = Path().apply {
+        moveTo(ox + skew, oy)            // 左上
+        lineTo(ox + w, oy)               // 右上
+        lineTo(ox + w - skew, oy + h)    // 右下
+        lineTo(ox, oy + h)               // 左下
         close()
     }
-    drawPath(fillPath, Color(0x30E74C3C))
+    drawPath(panelPath, Color(0xFFD6EAF8))
+    drawPath(panelPath, Color(0xFF2980B9), style = Stroke(width = 2f))
 
-    // 尺寸标注: 左半宽
-    val dimY = oy - 14f * density
-    drawLine(Color(0xFF333333), Offset(vLeft.x, dimY), Offset(bendX, dimY), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(vLeft.x, dimY - 4f), Offset(vLeft.x, dimY + 4f), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(bendX, dimY - 4f), Offset(bendX, dimY + 4f), strokeWidth = 1.5f)
-    drawText("${"%.1f".format(W / 20f)}cm", (vLeft.x + bendX) / 2f, dimY - 4f * density,
-        Color(0xFFD32F2F), 10f * density, true)
+    // 中间横线（底板位置）
+    val midY = oy + h * 0.5f
+    val midLeft = Offset(ox + skew * 0.5f, midY)
+    val midRight = Offset(ox + w - skew * 0.5f, midY)
+    drawLine(Color(0xFF2980B9).copy(alpha = 0.3f), midLeft, midRight, strokeWidth = 1f)
 
-    // 右半宽
-    drawLine(Color(0xFF333333), Offset(bendX, dimY), Offset(vRight.x, dimY), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(vRight.x, dimY - 4f), Offset(vRight.x, dimY + 4f), strokeWidth = 1.5f)
-    drawText("${"%.1f".format(W / 20f)}cm", (bendX + vRight.x) / 2f, dimY - 4f * density,
-        Color(0xFFD32F2F), 10f * density, true)
+    // 折弯线位置（按比例）
+    val bendFrac = baseX / b.coerceAtLeast(1f)
+    val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
+    val bendSkewTop = skew * (1f - bendFrac)
+    val bendSkewBot = skew * bendFrac
+    val bendTop = Offset(bendX + bendSkewTop, oy)
+    val bendBot = Offset(bendX - bendSkewBot, oy + h)
 
-    // 深度标注(右侧)
-    val dimX = ox + drawW + 10f * density
-    drawLine(Color(0xFF333333), Offset(dimX, oy), Offset(dimX, oy + drawH), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(dimX - 4f, oy), Offset(dimX + 4f, oy), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(dimX - 4f, oy + drawH), Offset(dimX + 4f, oy + drawH), strokeWidth = 1.5f)
-    drawText("${"%.1f".format(H / 10f)}cm", dimX + 8f * density, (oy + oy + drawH) / 2f,
-        Color(0xFFD32F2F), 10f * density, true)
+    // 折弯线（蓝色虚线）
+    drawPath(Path().apply { moveTo(bendTop.x, bendTop.y); lineTo(bendBot.x, bendBot.y) },
+        Color(0xFF1565C0), style = Stroke(width = 2f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))))
 
-    // "切掉" 标签
-    drawText("✂ 切掉", bendX, oy + drawH * 0.4f,
-        Color(0xFFD32F2F), 11f * density, true)
+    // 切口位置（折弯线两侧，V形三角）
+    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w  // 切口半宽在画布上的像素
+    val cutDepthPx = cutDepth / H.coerceAtLeast(1f) * h * 0.8f
+
+    // 上方切口三角（从顶边切入）
+    val cutLeft = bendX - cutHalfW
+    val cutRight = bendX + cutHalfW
+
+    // 上三角（顶点朝下，底边在顶边）
+    val triTopPath = Path().apply {
+        moveTo(cutLeft + bendSkewTop, oy)
+        lineTo(cutRight + bendSkewTop, oy)
+        lineTo(bendTop.x, bendTop.y + cutDepthPx * 0.5f)
+        close()
+    }
+    drawPath(triTopPath, Color(0x40E74C3C))
+    drawPath(triTopPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
+
+    // 下三角（从底边切入）
+    val triBotPath = Path().apply {
+        moveTo(cutLeft - bendSkewBot, oy + h)
+        lineTo(cutRight - bendSkewBot, oy + h)
+        lineTo(bendBot.x, bendBot.y - cutDepthPx * 0.5f)
+        close()
+    }
+    drawPath(triBotPath, Color(0x40E74C3C))
+    drawPath(triBotPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
+
+    // ── 尺寸标注（红色双箭头）──
+    val dimColor = Color(0xFFC62828)
+    val dimY1 = oy - 10f * density
+
+    // 上方：起坡距离
+    drawDimLineH(ox + skew, bendX + bendSkewTop, dimY1,
+        "%.1fcm".format(baseX / 10f), color = dimColor)
+
+    // 上方：剩余距离
+    drawDimLineH(bendX + bendSkewTop, ox + w, dimY1,
+        "%.1fcm".format((b - baseX) / 10f), color = dimColor)
+
+    // 切口深度标注
+    val dimY2 = oy + h + 12f * density
+    drawText("下料x=${"%.1f".format(cutDepth/10f)}cm",
+        bendX, dimY2, Color(0xFFC62828), 10f * density, true)
+
+    // 面板标签
+    drawText("侧板展开图", ox + w / 2f, oy + h / 2f - 4f * density,
+        Color(0xFF2980B9).copy(alpha = 0.5f), 11f * density, true)
+
+    // 折弯标注
+    drawText("折弯线", bendX + bendSkewTop + 4f * density, oy + 12f * density,
+        Color(0xFF1565C0), 9f * density)
 }
 
-/** 绘制底板切割图 */
-private fun DrawScope.drawBottomPanelGuide(params: CalcParams) {
+/** 绘制底板3D透视展开图 */
+private fun DrawScope.drawBottomPanel3D(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
     val W = params.width.toFloat()
-    val alpha = params.angle.toFloat()
-    val aRad = alpha * PI.toFloat() / 180f
-    val cw = size.width
-    val ch = size.height
-    val pad = 28f * density
+    val b = params.distance.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
 
-    val panelLenCm = 30f
-    val panelLen = panelLenCm * 10f
-    val scaleX = (cw - pad * 2f) / panelLen
-    val scaleY = (ch - pad * 2f - 20f * density) / W
-    val sc = minOf(scaleX, scaleY)
-
-    val drawW = W * sc
-    val drawL = panelLen * sc
-    val ox = (cw - drawL) / 2f
-    val oy = (ch - drawW) / 2f + 10f * density
+    val baseX = b * tan(aRad / 2f)
 
     // 底板矩形
-    drawRect(Color(0xFFD6EAF8), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(drawL, drawW))
-    drawRect(Color(0xFF2980B9), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(drawL, drawW), style = Stroke(width = 2.5f))
+    drawRect(Color(0xFFE8F5E9), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h))
+    drawRect(Color(0xFF2E7D32), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h), style = Stroke(width = 2f))
 
-    // 折弯线(蓝色虚线)
-    val bendFrac = 0.4f
-    val bendX = ox + drawL * bendFrac
-    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + drawW),
+    // 中间竖线（折弯线位置）
+    val bendFrac = baseX / b.coerceAtLeast(1f)
+    val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
+
+    // 折弯线（蓝色虚线）
+    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
         strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
-    drawText("折弯线", bendX, oy - 4f * density, Color(0xFF1565C0), 10f * density, true)
 
-    // V-notch
-    val notchBaseHalf = (W / 2f) * sc
-    val notchDepthMm = W / (2.0 * tan(aRad / 2.0))
-    val notchDepthPx = notchDepthMm.toFloat() * sc
+    // V形切口（从顶边切入，底边在折弯线）
+    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w
+    val cutDepthPx = h * 0.7f
 
-    // 限制V形不超出面板
-    val maxHalfW = drawL * bendFrac * 0.85f
-    val actualHalfW = minOf(notchBaseHalf, maxHalfW)
-    val maxDepth = drawW * 0.9f
-    val actualDepth = minOf(notchDepthPx, maxDepth)
-
-    val vLeft = Offset(bendX - actualHalfW, oy)
-    val vRight = Offset(bendX + actualHalfW, oy)
-    val vBottom = Offset(bendX, oy + actualDepth)
-
-    val notchPath = Path().apply {
-        moveTo(vLeft.x, vLeft.y)
-        lineTo(vBottom.x, vBottom.y)
-        lineTo(vRight.x, vRight.y)
+    val vPath = Path().apply {
+        moveTo(bendX - cutHalfW, oy)
+        lineTo(bendX, oy + cutDepthPx)
+        lineTo(bendX + cutHalfW, oy)
     }
-    drawPath(notchPath, Color(0xFFE74C3C), style = Stroke(width = 3f))
+    drawPath(vPath, Color(0xFFE74C3C), style = Stroke(width = 2.5f))
 
-    val fillPath = Path().apply {
-        moveTo(vLeft.x, vLeft.y)
-        lineTo(vBottom.x, vBottom.y)
-        lineTo(vRight.x, vRight.y)
+    val vFill = Path().apply {
+        moveTo(bendX - cutHalfW, oy)
+        lineTo(bendX, oy + cutDepthPx)
+        lineTo(bendX + cutHalfW, oy)
         close()
     }
-    drawPath(fillPath, Color(0x30E74C3C))
+    drawPath(vFill, Color(0x30E74C3C))
 
-    // 标注: 宽度W
-    val dimY = oy - 14f * density
-    drawLine(Color(0xFF333333), Offset(vLeft.x, dimY), Offset(vRight.x, dimY), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(vLeft.x, dimY - 4f), Offset(vLeft.x, dimY + 4f), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(vRight.x, dimY - 4f), Offset(vRight.x, dimY + 4f), strokeWidth = 1.5f)
-    drawText("${"%.1f".format(W / 10f)}cm", (vLeft.x + vRight.x) / 2f, dimY - 4f * density,
-        Color(0xFFD32F2F), 10f * density, true)
+    // 尺寸标注
+    val dimColor = Color(0xFFC62828)
+    drawDimLineH(ox, bendX, oy - 8f * density,
+        "%.1fcm".format(baseX / 10f), color = dimColor)
+    drawDimLineH(bendX, ox + w, oy - 8f * density,
+        "%.1fcm".format((b - baseX) / 10f), color = dimColor)
 
-    // 标注: 深度
-    val dimX = ox + drawL + 10f * density
-    drawLine(Color(0xFF333333), Offset(dimX, oy), Offset(dimX, vBottom.y), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(dimX - 4f, oy), Offset(dimX + 4f, oy), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(dimX - 4f, vBottom.y), Offset(dimX + 4f, vBottom.y), strokeWidth = 1.5f)
-    drawText("${"%.1f".format(notchDepthMm / 10.0)}cm", dimX + 8f * density, (oy + vBottom.y) / 2f,
-        Color(0xFFD32F2F), 10f * density, true)
+    // 切口宽度标注
+    drawText("切口宽=${"%.1f".format(W/10f)}cm",
+        bendX, oy + h + 10f * density, dimColor, 9f * density, true)
 
-    // "切掉" 标签
-    drawText("✂ 切掉", bendX, oy + actualDepth * 0.4f,
-        Color(0xFFD32F2F), 11f * density, true)
+    // 标签
+    drawText("底板展开图", ox + w / 2f, oy + h / 2f,
+        Color(0xFF2E7D32).copy(alpha = 0.4f), 10f * density, true)
+    drawText("折弯线", bendX + 4f * density, oy + h - 6f * density,
+        Color(0xFF1565C0), 8f * density)
+}
 
-    // 面板宽度标注(左侧)
-    val leftDimX = ox - 10f * density
-    drawLine(Color(0xFF333333), Offset(leftDimX, oy), Offset(leftDimX, oy + drawW), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(leftDimX - 4f, oy), Offset(leftDimX + 4f, oy), strokeWidth = 1.5f)
-    drawLine(Color(0xFF333333), Offset(leftDimX - 4f, oy + drawW), Offset(leftDimX + 4f, oy + drawW), strokeWidth = 1.5f)
-    drawText("W", leftDimX - 6f * density, (oy + oy + drawW) / 2f,
-        Color(0xFF333333), 10f * density, true)
+/** 绘制3D线框弯头模型 */
+private fun DrawScope.drawWireframeBentTray(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
+    val W = params.width.toFloat()
+    val H = params.height.toFloat()
+    val b = params.distance.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+
+    val baseX = b * tan(aRad / 2f)
+    val riseH = b * tan(aRad)
+
+    // 缩放
+    val totalLen = sqrt(b * b + riseH * riseH)
+    val scX = w * 0.8f / totalLen.coerceAtLeast(1f)
+    val scY = h * 0.8f / (riseH + H).coerceAtLeast(1f)
+    val sc = minOf(scX, scY)
+
+    val cx = ox + w / 2f
+    val cy = oy + h * 0.7f
+
+    // 简化3D线框：画两个倾斜的矩形表示弯头
+    val rampL = b * sc
+    val rampRise = riseH * sc
+    val trayH = H * sc
+    val skewX = trayH * 0.3f
+
+    // 前侧面
+    val front = Path().apply {
+        moveTo(cx - rampL / 2f, cy)
+        lineTo(cx + rampL / 2f, cy)
+        lineTo(cx + rampL / 2f - skewX, cy - rampRise - trayH)
+        lineTo(cx - rampL / 2f - skewX, cy - rampRise - trayH)
+        close()
+    }
+    drawPath(front, WIRE_COLOR, style = Stroke(width = 1.5f))
+
+    // 后侧面（偏移）
+    val backOff = trayH * 0.5f
+    val back = Path().apply {
+        moveTo(cx - rampL / 2f + backOff, cy - backOff * 0.5f)
+        lineTo(cx + rampL / 2f + backOff, cy - backOff * 0.5f)
+        lineTo(cx + rampL / 2f + backOff - skewX, cy - rampRise - trayH - backOff * 0.5f)
+        lineTo(cx - rampL / 2f + backOff - skewX, cy - rampRise - trayH - backOff * 0.5f)
+        close()
+    }
+    drawPath(back, WIRE_COLOR.copy(alpha = 0.4f), style = Stroke(width = 1f))
+
+    // 连接线
+    drawLine(WIRE_COLOR.copy(alpha = 0.3f),
+        Offset(cx - rampL / 2f, cy),
+        Offset(cx - rampL / 2f + backOff, cy - backOff * 0.5f), strokeWidth = 1f)
+    drawLine(WIRE_COLOR.copy(alpha = 0.3f),
+        Offset(cx + rampL / 2f, cy),
+        Offset(cx + rampL / 2f + backOff, cy - backOff * 0.5f), strokeWidth = 1f)
+    drawLine(WIRE_COLOR.copy(alpha = 0.3f),
+        Offset(cx - rampL / 2f - skewX, cy - rampRise - trayH),
+        Offset(cx - rampL / 2f + backOff - skewX, cy - rampRise - trayH - backOff * 0.5f), strokeWidth = 1f)
+    drawLine(WIRE_COLOR.copy(alpha = 0.3f),
+        Offset(cx + rampL / 2f - skewX, cy - rampRise - trayH),
+        Offset(cx + rampL / 2f + backOff - skewX, cy - rampRise - trayH - backOff * 0.5f), strokeWidth = 1f)
+
+    // 标签
+    drawText("3D模型", cx, oy + 10f * density,
+        Color(0xFF7F8C8D), 9f * density, true)
+}
+
+/** 水平弯头 - 3D透视划线图 */
+private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float, ch: Float) {
+    // 水平弯头：底板有V形切口，侧板不变
+    val margin = 20f * density
+    val titleH = 18f * density
+    drawText("水平弯头划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+
+    // 底板展开图（占主要区域）
+    val bottomTop = titleH + 10f * density
+    val bottomH = ch * 0.45f
+    val bottomW = cw - margin * 2f
+    drawBottomPanel3D(margin, bottomTop, bottomW, bottomH, params)
+
+    // 3D线框
+    val wireTop = bottomTop + bottomH + 10f * density
+    val wireH = ch - wireTop - 20f * density
+    drawWireframeBentTray(margin, wireTop, cw - margin * 2f, wireH, params)
+
+    // 尺寸汇总
+    val W = params.width.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+    val cutDepth = W * tan(aRad / 2f)
+    drawText("切口宽=${"%.1f".format(W/10f)}cm  深=${"%.1f".format(cutDepth/10f)}cm  角度=${angleDeg.toInt()}°",
+        cw / 2f, ch - 8f * density, Color(0xFFC62828), 10f * density, true)
+}
+
+/** 三通 - 3D透视划线图 */
+private fun DrawScope.drawTeeCuttingGuide3D(params: CalcParams, cw: Float, ch: Float) {
+    val W = params.width.toFloat()
+    val H = params.height.toFloat()
+    val margin = 20f * density
+    val titleH = 18f * density
+    drawText("三通划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+
+    // 主管展开图
+    val mainTop = titleH + 10f * density
+    val mainH = ch * 0.3f
+    val mainW = cw - margin * 2f
+
+    // 主管矩形
+    drawRect(Color(0xFFD6EAF8), Offset(margin, mainTop),
+        androidx.compose.ui.geometry.Size(mainW, mainH))
+    drawRect(Color(0xFF2980B9), Offset(margin, mainTop),
+        androidx.compose.ui.geometry.Size(mainW, mainH), style = Stroke(width = 2f))
+
+    // 支管切口（中间矩形）
+    val branchW = mainW * 0.3f
+    val branchH = mainH * 0.6f
+    val branchX = margin + (mainW - branchW) / 2f
+    val branchY = mainTop + (mainH - branchH) / 2f
+    drawRect(Color(0x40E74C3C), Offset(branchX, branchY),
+        androidx.compose.ui.geometry.Size(branchW, branchH))
+    drawRect(Color(0xFFE74C3C), Offset(branchX, branchY),
+        androidx.compose.ui.geometry.Size(branchW, branchH), style = Stroke(width = 2f))
+
+    // 标注
+    drawText("主管 ${"%.1f".format(W/10f)}cm", margin + mainW/2f, mainTop - 8f*density,
+        Color(0xFFC62828), 10f*density, true)
+    drawText("支管切口", branchX + branchW/2f, branchY + branchH/2f,
+        Color(0xFFE74C3C), 9f*density, true)
+
+    // 3D线框
+    val wireTop = mainTop + mainH + 10f*density
+    val wireH = ch - wireTop - 20f*density
+    drawWireframeBentTray(margin, wireTop, cw - margin*2f, wireH, params)
+}
+
+/** 变径 - 3D透视划线图 */
+private fun DrawScope.drawReducingCuttingGuide3D(params: CalcParams, cw: Float, ch: Float) {
+    val w1 = params.beforeWidth.toFloat()
+    val w2 = params.afterWidth.toFloat()
+    val margin = 20f * density
+    val titleH = 18f * density
+    drawText("变径划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+
+    // 梯形展开图
+    val top = titleH + 10f * density
+    val panelH = ch * 0.4f
+    val panelW = cw - margin * 2f
+
+    val w1Frac = w1 / maxOf(w1, w2)
+    val w2Frac = w2 / maxOf(w1, w2)
+    val w1Px = panelW * w1Frac
+    val w2Px = panelW * w2Frac
+
+    val trapezoidPath = Path().apply {
+        moveTo(margin + (panelW - w1Px) / 2f, top)
+        lineTo(margin + (panelW + w1Px) / 2f, top)
+        lineTo(margin + (panelW + w2Px) / 2f, top + panelH)
+        lineTo(margin + (panelW - w2Px) / 2f, top + panelH)
+        close()
+    }
+    drawPath(trapezoidPath, Color(0xFFD6EAF8))
+    drawPath(trapezoidPath, Color(0xFF2980B9), style = Stroke(width = 2f))
+
+    // 标注
+    drawText("${"%.1f".format(w1/10f)}cm", margin + panelW/2f, top - 8f*density,
+        Color(0xFFC62828), 10f*density, true)
+    drawText("${"%.1f".format(w2/10f)}cm", margin + panelW/2f, top + panelH + 14f*density,
+        Color(0xFFC62828), 10f*density, true)
+
+    // 3D线框
+    val wireTop = top + panelH + 20f*density
+    val wireH = ch - wireTop - 20f*density
+    drawWireframeBentTray(margin, wireTop, cw - margin*2f, wireH, params)
+}
+
+/** 组合翻弯 - 3D透视划线图 */
+private fun DrawScope.drawCompositeCuttingGuide3D(params: CalcParams, cw: Float, ch: Float) {
+    val b1 = params.distance1.toFloat()
+    val a1Rad = params.angle1.toFloat() * PI.toFloat() / 180f
+    val b2 = params.distance2.toFloat()
+    val a2Rad = params.angle2.toFloat() * PI.toFloat() / 180f
+    val W = params.width.toFloat()
+    val cutDepth1 = W * tan(a1Rad / 2f)
+    val cutDepth2 = W * tan(a2Rad / 2f)
+
+    val margin = 20f * density
+    val titleH = 18f * density
+    drawText("组合翻弯划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+
+    // 侧板展开图
+    val sideTop = titleH + 10f * density
+    val sideH = ch * 0.35f
+    val sideW = cw - margin * 2f
+
+    // 侧板矩形
+    drawRect(Color(0xFFD6EAF8), Offset(margin, sideTop),
+        androidx.compose.ui.geometry.Size(sideW, sideH))
+    drawRect(Color(0xFF2980B9), Offset(margin, sideTop),
+        androidx.compose.ui.geometry.Size(sideW, sideH), style = Stroke(width = 2f))
+
+    // 两个切口
+    val totalLen = b1 + b2
+    val bend1Frac = b1 * tan(a1Rad / 2f) / totalLen
+    val bend2Frac = (b1 + b2 - b2 * tan(a2Rad / 2f)) / totalLen
+
+    val cut1X = margin + sideW * bend1Frac
+    val cut2X = margin + sideW * bend2Frac
+
+    // 切口1（V形三角）
+    val cut1Path = Path().apply {
+        moveTo(cut1X - 8f*density, sideTop)
+        lineTo(cut1X, sideTop + sideH * 0.5f)
+        lineTo(cut1X + 8f*density, sideTop)
+        close()
+    }
+    drawPath(cut1Path, Color(0x40E74C3C))
+    drawPath(cut1Path, Color(0xFFE74C3C), style = Stroke(width = 2f))
+
+    // 切口2
+    val cut2Path = Path().apply {
+        moveTo(cut2X - 8f*density, sideTop)
+        lineTo(cut2X, sideTop + sideH * 0.5f)
+        lineTo(cut2X + 8f*density, sideTop)
+        close()
+    }
+    drawPath(cut2Path, Color(0x40E74C3C))
+    drawPath(cut2Path, Color(0xFFE74C3C), style = Stroke(width = 2f))
+
+    // 标注
+    drawText("切口1: ${"%.1f".format(cutDepth1/10f)}cm", cut1X, sideTop + sideH + 10f*density,
+        Color(0xFFC62828), 9f*density, true)
+    drawText("切口2: ${"%.1f".format(cutDepth2/10f)}cm", cut2X, sideTop + sideH + 10f*density,
+        Color(0xFFC62828), 9f*density, true)
+
+    // 3D线框
+    val wireTop = sideTop + sideH + 25f*density
+    val wireH = ch - wireTop - 15f*density
+    drawWireframeBentTray(margin, wireTop, cw - margin*2f, wireH, params)
 }

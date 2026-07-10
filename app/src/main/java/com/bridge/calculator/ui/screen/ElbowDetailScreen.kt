@@ -65,85 +65,81 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                 }
             }
 
-            if (pagerState.currentPage == 1) {
-                // 划线图：全屏施工划线指导
-                CuttingGuideView(
-                    params = viewModel.params,
-                    modelType = elbowSpec.modelType,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                // 其他Tab：图形 + 参数
-                Card(
-                    modifier = Modifier.fillMaxWidth().height(320.dp),
-                    shape = RoundedCornerShape(0.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        when (pagerState.currentPage) {
-                            0 -> CalculationView(
-                                params = viewModel.params,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            2 -> BridgeElbowScene(
-                                params = viewModel.params,
-                                modelType = elbowSpec.modelType,
-                                modifier = Modifier.fillMaxSize()
+            // 图形区域（所有Tab统一布局）
+            Card(
+                modifier = Modifier.fillMaxWidth().height(320.dp),
+                shape = RoundedCornerShape(0.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    when (pagerState.currentPage) {
+                        0 -> CalculationView(
+                            params = viewModel.params,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        1 -> CuttingGuideView(
+                            params = viewModel.params,
+                            modelType = elbowSpec.modelType,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        2 -> BridgeElbowScene(
+                            params = viewModel.params,
+                            modelType = elbowSpec.modelType,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+
+            // 下方滚动内容
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "做法说明", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = elbowSpec.description, style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            item { Text(text = "输入参数", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        elbowSpec.inputParams.forEach { param ->
+                            ParamInputField(
+                                param = param,
+                                value = getParamValue(viewModel.params, param.key),
+                                onValueChange = { viewModel.updateParam(param.key, it) }
                             )
                         }
                     }
                 }
-
-                // 下方滚动内容
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "做法说明", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = elbowSpec.description, style = MaterialTheme.typography.bodyMedium,
+            }
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f))) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Calculate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(text = "计算公式", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                            Text(text = elbowSpec.formula, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
-                item { Text(text = "输入参数", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                item {
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            elbowSpec.inputParams.forEach { param ->
-                                ParamInputField(
-                                    param = param,
-                                    value = getParamValue(viewModel.params, param.key),
-                                    onValueChange = { viewModel.updateParam(param.key, it) }
-                                )
-                            }
-                        }
-                    }
-                }
-                item {
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f))) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Calculate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(text = "计算公式", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-                                Text(text = elbowSpec.formula, style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-                item { Text(text = "计算结果", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                items(viewModel.results) { result -> ResultCard(result = result) }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-                }  // LazyColumn
-            }  // else
+            }
+            item { Text(text = "计算结果", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            items(viewModel.results) { result -> ResultCard(result = result) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            }  // LazyColumn
         }  // Column
     }  // Scaffold
 }  // ElbowDetailScreen
