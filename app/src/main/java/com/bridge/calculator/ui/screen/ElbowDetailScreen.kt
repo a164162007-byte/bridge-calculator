@@ -69,6 +69,7 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                     when (selectedTab) {
                         0 -> CalculationView(
                             params = viewModel.params,
+                            modelType = elbowSpec.modelType,
                             modifier = Modifier.fillMaxSize()
                         )
                         1 -> CuttingGuideView(

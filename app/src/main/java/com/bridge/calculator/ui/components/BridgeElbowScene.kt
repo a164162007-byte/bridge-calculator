@@ -1,5 +1,6 @@
 package com.bridge.calculator.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -51,7 +52,7 @@ fun BridgeElbowScene(
 
     val centerNode = rememberNode(engine) { name = "scene_center" }
     val cameraNode = rememberCameraNode(engine) {
-        position = Position(x = 1.2f, y = 0.8f, z = 1.6f)
+        position = Position(x = 0.6f, y = 0.5f, z = 0.8f)
         lookAt(centerNode)
     }
 
@@ -61,7 +62,9 @@ fun BridgeElbowScene(
     }
 
     Scene(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFECEFF1)),
         engine = engine,
         modelLoader = modelLoader,
         materialLoader = materialLoader,
@@ -303,7 +306,7 @@ private fun buildRampNodes(
     val w = (params.width / 1000.0).toFloat()
     val h = (params.height / 1000.0).toFloat()
     val alphaRad = (params.angle * PI / 180.0).toFloat().coerceAtLeast(0.001f)
-    val segLen = 0.40f
+    val segLen = 0.60f
 
     val nodes = mutableListOf<Node>()
 
@@ -355,7 +358,7 @@ private fun buildHorizontalNodes(
     val w = (params.width / 1000.0).toFloat()
     val h = (params.height / 1000.0).toFloat()
     val alphaRad = (params.angle * PI / 180.0).toFloat().coerceAtLeast(0.001f)
-    val segLen = 0.40f
+    val segLen = 0.60f
 
     val nodes = mutableListOf<Node>()
 

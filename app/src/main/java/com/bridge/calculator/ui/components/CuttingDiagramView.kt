@@ -37,8 +37,27 @@ import kotlin.math.*
 @Composable
 fun CalculationView(
     params: CalcParams,
+    modelType: ModelType = ModelType.RAMP,
     modifier: Modifier = Modifier
 ) {
+    Canvas(modifier = modifier.fillMaxSize().padding(8.dp)) {
+        when (modelType) {
+            ModelType.RAMP, ModelType.CUSTOM, ModelType.FOLDED ->
+                drawRampCalculation(params, size.width, size.height)
+            ModelType.HORIZONTAL ->
+                drawHorizontalCalculation(params, size.width, size.height)
+            ModelType.TEE ->
+                drawTeeCalculation(params, size.width, size.height)
+            ModelType.REDUCING ->
+                drawReducingCalculation(params, size.width, size.height)
+            ModelType.COMPOSITE ->
+                drawCompositeCalculation(params, size.width, size.height)
+        }
+    }
+}
+
+/** 爬坡弯头计算图 — 砖墙+直角三角形+尺寸标注 */
+private fun DrawScope.drawRampCalculation(params: CalcParams, cw: Float, ch: Float) {
     val W = params.width.toFloat()
     val b = params.distance.toFloat()
     val angleDeg = params.angle.toFloat()
@@ -54,69 +73,300 @@ fun CalculationView(
     val angleB = angleDeg
     val angleC = maxOf(0f, 180f - angleA - angleB)
 
-    Canvas(modifier = modifier.fillMaxSize().padding(8.dp)) {
-        val cw = size.width
-        val ch = size.height
-        val margin = 30f
-        val brickW = cw * 0.12f
-        val bottomMargin = 60f
+    val margin = 30f
+    val brickW = cw * 0.12f
+    val bottomMargin = 60f
 
-        val availW = cw - brickW - margin * 2f
-        val availH = ch - bottomMargin - margin
-        val maxDim = maxOf(b, riseH)
-        val sc = minOf(availW / maxDim, availH / maxDim)
+    val availW = cw - brickW - margin * 2f
+    val availH = ch - bottomMargin - margin
+    val maxDim = maxOf(b, riseH)
+    val sc = minOf(availW / maxDim, availH / maxDim)
 
-        val triW = b * sc
-        val triH = riseH * sc
-        val triX = b * sc - baseX * sc
+    val triW = b * sc
+    val triH = riseH * sc
 
-        val ox = brickW + margin
-        val oy = ch - bottomMargin
+    val ox = brickW + margin
+    val oy = ch - bottomMargin
 
-        val pA = Offset(ox, oy - triH)
-        val pB = Offset(ox, oy)
-        val pC = Offset(ox + triW, oy)
+    val pA = Offset(ox, oy - triH)
+    val pB = Offset(ox, oy)
+    val pC = Offset(ox + triW, oy)
 
-        drawBrickWall(ox, oy, triH, brickW)
+    drawBrickWall(ox, oy, triH, brickW)
 
-        val rampPath = Path().apply {
-            moveTo(pB.x, pB.y)
-            lineTo(pC.x, pC.y)
-            lineTo(pA.x, pA.y)
-            close()
-        }
-        drawPath(rampPath, Color(0x3042A5F5))
-        drawPath(rampPath, Color(0xFF1565C0), style = Stroke(width = 3f))
-
-        // 桥架宽度小方块
-        val boxSize = 28f
-        drawRect(Color(0xFF1565C0), Offset(pB.x - boxSize - 4f, pB.y - boxSize / 2f),
-            androidx.compose.ui.geometry.Size(boxSize, boxSize))
-        drawText("L", pB.x - boxSize / 2f - 4f, pB.y + 5f, Color.White, 11f * density, true)
-
-        // 三角形内部标注
-        val midAB = Offset((pA.x + pB.x) / 2f, (pA.y + pB.y) / 2f)
-        val midBC = Offset((pB.x + pC.x) / 2f, (pB.y + pC.y) / 2f)
-        val midAC = Offset((pA.x + pC.x) / 2f, (pA.y + pC.y) / 2f)
-
-        drawDimV(midAB.x - 24f * density, midAB.y, "a=%.1f".format(riseH / 10f))
-        drawDimH(midBC.x, midBC.y + 22f * density, "b=%.1f".format(b / 10f))
-        drawText("c=%.1f".format(hypL / 10f), midAC.x + 16f * density, midAC.y - 8f * density,
-            Color(0xFFC62828), 14f * density, true)
-
-        drawText("∠A=%.0f°".format(angleA), pA.x + 14f * density, pA.y + 18f * density,
-            Color(0xFFC62828), 11f * density)
-        drawText("∠B=%.0f°".format(angleB), pB.x + 10f * density, pB.y - 10f * density,
-            Color(0xFFC62828), 11f * density)
-        drawText("∠C=%.0f°".format(angleC), pC.x - 50f * density, pC.y - 10f * density,
-            Color(0xFFC62828), 11f * density)
-
-        // 下料参数
-        drawText("下料x: %.2f cm".format(cutW / 10f), cw - margin, margin + 10f * density,
-            Color(0xFF212121), 14f * density, true)
-        drawText("x/2: %.3f cm".format(cutHalf / 10f), cw - margin, margin + 32f * density,
-            Color(0xFF212121), 13f * density)
+    val rampPath = Path().apply {
+        moveTo(pB.x, pB.y)
+        lineTo(pC.x, pC.y)
+        lineTo(pA.x, pA.y)
+        close()
     }
+    drawPath(rampPath, Color(0x3042A5F5))
+    drawPath(rampPath, Color(0xFF1565C0), style = Stroke(width = 3f))
+
+    val boxSize = 28f
+    drawRect(Color(0xFF1565C0), Offset(pB.x - boxSize - 4f, pB.y - boxSize / 2f),
+        androidx.compose.ui.geometry.Size(boxSize, boxSize))
+    drawText("L", pB.x - boxSize / 2f - 4f, pB.y + 5f, Color.White, 11f * density, true)
+
+    val midAB = Offset((pA.x + pB.x) / 2f, (pA.y + pB.y) / 2f)
+    val midBC = Offset((pB.x + pC.x) / 2f, (pB.y + pC.y) / 2f)
+    val midAC = Offset((pA.x + pC.x) / 2f, (pA.y + pC.y) / 2f)
+
+    drawDimV(midAB.x - 24f * density, midAB.y, "a=%.1f".format(riseH / 10f))
+    drawDimH(midBC.x, midBC.y + 22f * density, "b=%.1f".format(b / 10f))
+    drawText("c=%.1f".format(hypL / 10f), midAC.x + 16f * density, midAC.y - 8f * density,
+        Color(0xFFC62828), 14f * density, true)
+
+    drawText("∠A=%.0f°".format(angleA), pA.x + 14f * density, pA.y + 18f * density,
+        Color(0xFFC62828), 11f * density)
+    drawText("B=%.0f°".format(angleB), pB.x + 10f * density, pB.y - 10f * density,
+        Color(0xFFC62828), 11f * density)
+    drawText("∠C=%.0f°".format(angleC), pC.x - 50f * density, pC.y - 10f * density,
+        Color(0xFFC62828), 11f * density)
+
+    drawText("下料x: %.2f cm".format(cutW / 10f), cw - margin, margin + 10f * density,
+        Color(0xFF212121), 14f * density, true)
+    drawText("x/2: %.3f cm".format(cutHalf / 10f), cw - margin, margin + 32f * density,
+        Color(0xFF212121), 13f * density)
+}
+
+/** 水平弯头计算图 — 俯视图，两段桥架在水平面内转折 */
+private fun DrawScope.drawHorizontalCalculation(params: CalcParams, cw: Float, ch: Float) {
+    val W = params.width.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+    val cutW = W * tan(aRad / 2f)
+    val cutHalf = cutW / 2f
+
+    val margin = 40f
+    val bottomMargin = 60f
+    val availW = cw - margin * 2f
+    val availH = ch - bottomMargin - margin
+
+    // 两段桥架长度（按比例）
+    val segLen = minOf(availW, availH) * 0.4f
+    val cx = cw / 2f
+    val cy = ch / 2f + 10f * density
+
+    // 第一段（水平向右）
+    val seg1Start = Offset(cx - segLen, cy)
+    val seg1End = Offset(cx, cy)
+    // 第二段（转折后）
+    val turnX = cx + segLen * cos(aRad)
+    val turnY = cy - segLen * sin(aRad)
+    val seg2End = Offset(turnX, turnY)
+
+    // 绘制桥架段（双线表示宽度）
+    val hw = W / 2000f * cw  // 半宽像素
+    val trailW = maxOf(8f, hw)
+
+    // 第一段桥架
+    val seg1Path = Path().apply {
+        moveTo(seg1Start.x, seg1Start.y - trailW)
+        lineTo(seg1End.x, seg1End.y - trailW)
+        lineTo(seg1End.x, seg1End.y + trailW)
+        lineTo(seg1Start.x, seg1Start.y + trailW)
+        close()
+    }
+    drawPath(seg1Path, Color(0x3042A5F5))
+    drawPath(seg1Path, Color(0xFF1565C0), style = Stroke(width = 2f))
+
+    // 第二段桥架
+    val seg2Path = Path().apply {
+        moveTo(seg1End.x, seg1End.y - trailW)
+        lineTo(seg2End.x, seg2End.y - trailW)
+        lineTo(seg2End.x, seg2End.y + trailW)
+        lineTo(seg1End.x, seg1End.y + trailW)
+        close()
+    }
+    drawPath(seg2Path, Color(0x3042A5F5))
+    drawPath(seg2Path, Color(0xFF1565C0), style = Stroke(width = 2f))
+
+    // 切口线（在转折处）
+    val cutAngle = aRad / 2f
+    val cutLen = trailW / sin(cutAngle)
+    val cutStart = Offset(cx - trailW * cos(cutAngle), cy - trailW * sin(cutAngle))
+    val cutEnd = Offset(cx + trailW * cos(cutAngle), cy + trailW * sin(cutAngle))
+    drawLine(Color(0xFFE74C3C), cutStart, cutEnd, strokeWidth = 3f)
+
+    // 角度标注
+    drawText("转折角=${angleDeg.toInt()}°", cx + 10f * density, cy - trailW - 20f * density,
+        Color(0xFFC62828), 13f * density, true)
+
+    // 切口尺寸
+    drawText("切口宽=%.1fcm".format(W / 10f), margin, margin + 10f * density,
+        Color(0xFF212121), 12f * density, true)
+    drawText("下料x=%.2fcm".format(cutW / 10f), margin, margin + 30f * density,
+        Color(0xFF212121), 12f * density, true)
+    drawText("x/2=%.3fcm".format(cutHalf / 10f), margin, margin + 50f * density,
+        Color(0xFF212121), 12f * density, true)
+
+    // 方向箭头
+    drawArrowHead(Offset(cx - segLen - 10f * density, cy), seg1Start, Color(0xFF1565C0), 10f)
+    drawArrowHead(seg2End, Offset(turnX + 10f * density * cos(aRad), turnY - 10f * density * sin(aRad)),
+        Color(0xFF1565C0), 10f)
+}
+
+/** 三通计算图 */
+private fun DrawScope.drawTeeCalculation(params: CalcParams, cw: Float, ch: Float) {
+    val W = params.width.toFloat()
+    val margin = 30f
+    val bottomMargin = 60f
+    val availW = cw - margin * 2f
+    val availH = ch - bottomMargin - margin
+    val segLen = minOf(availW, availH) * 0.35f
+    val cx = cw / 2f
+    val cy = ch / 2f
+
+    // 主管（水平）
+    val trailW = maxOf(8f, W / 2000f * cw)
+    val mainPath = Path().apply {
+        moveTo(cx - segLen, cy - trailW)
+        lineTo(cx + segLen, cy - trailW)
+        lineTo(cx + segLen, cy + trailW)
+        lineTo(cx - segLen, cy + trailW)
+        close()
+    }
+    drawPath(mainPath, Color(0x3042A5F5))
+    drawPath(mainPath, Color(0xFF1565C0), style = Stroke(width = 2f))
+
+    // 支管（垂直向下）
+    val branchW = W * 0.6f
+    val branchTrailW = maxOf(6f, branchW / 2000f * cw)
+    val branchPath = Path().apply {
+        moveTo(cx - branchTrailW, cy)
+        lineTo(cx + branchTrailW, cy)
+        lineTo(cx + branchTrailW, cy + segLen * 0.7f)
+        lineTo(cx - branchTrailW, cy + segLen * 0.7f)
+        close()
+    }
+    drawPath(branchPath, Color(0x302E7D32))
+    drawPath(branchPath, Color(0xFF2E7D32), style = Stroke(width = 2f))
+
+    // 标注
+    drawText("主管宽=%.1fcm".format(W / 10f), margin, margin + 10f * density,
+        Color(0xFF212121), 12f * density, true)
+    drawText("支管宽=%.1fcm".format(branchW / 10f), margin, margin + 30f * density,
+        Color(0xFF212121), 12f * density, true)
+    drawText("三通连接", cx - 30f * density, cy - trailW - 15f * density,
+        Color(0xFFC62828), 13f * density, true)
+}
+
+/** 变径计算图 */
+private fun DrawScope.drawReducingCalculation(params: CalcParams, cw: Float, ch: Float) {
+    val w1 = params.beforeWidth.toFloat()
+    val w2 = params.afterWidth.toFloat()
+    val margin = 30f
+    val bottomMargin = 60f
+    val availW = cw - margin * 2f
+    val availH = ch - bottomMargin - margin
+    val segLen = availW * 0.4f
+    val cx = cw / 2f
+    val cy = ch / 2f
+
+    // 大段（左侧）
+    val trailW1 = maxOf(10f, w1 / 2000f * cw)
+    val bigPath = Path().apply {
+        moveTo(cx - segLen, cy - trailW1)
+        lineTo(cx, cy - trailW1)
+        lineTo(cx, cy + trailW1)
+        lineTo(cx - segLen, cy + trailW1)
+        close()
+    }
+    drawPath(bigPath, Color(0x3042A5F5))
+    drawPath(bigPath, Color(0xFF1565C0), style = Stroke(width = 2f))
+
+    // 小段（右侧）
+    val trailW2 = maxOf(6f, w2 / 2000f * cw)
+    val smallPath = Path().apply {
+        moveTo(cx, cy - trailW2)
+        lineTo(cx + segLen, cy - trailW2)
+        lineTo(cx + segLen, cy + trailW2)
+        lineTo(cx, cy + trailW2)
+        close()
+    }
+    drawPath(smallPath, Color(0x302E7D32))
+    drawPath(smallPath, Color(0xFF2E7D32), style = Stroke(width = 2f))
+
+    // 过渡线
+    drawLine(Color(0xFFE74C3C), Offset(cx, cy - trailW1), Offset(cx, cy - trailW2), strokeWidth = 2f)
+    drawLine(Color(0xFFE74C3C), Offset(cx, cy + trailW1), Offset(cx, cy + trailW2), strokeWidth = 2f)
+
+    // 标注
+    drawText("大端=%.1fcm".format(w1 / 10f), cx - segLen / 2f - 20f * density, cy - trailW1 - 15f * density,
+        Color(0xFFC62828), 12f * density, true)
+    drawText("小端=%.1fcm".format(w2 / 10f), cx + segLen / 2f - 10f * density, cy - trailW2 - 15f * density,
+        Color(0xFFC62828), 12f * density, true)
+    drawText("变径过渡", cx - 25f * density, cy + maxOf(trailW1, trailW2) + 20f * density,
+        Color(0xFF212121), 12f * density, true)
+}
+
+/** 组合翻弯计算图 */
+private fun DrawScope.drawCompositeCalculation(params: CalcParams, cw: Float, ch: Float) {
+    val W = params.width.toFloat()
+    val b1 = params.distance1.toFloat()
+    val b2 = params.distance2.toFloat()
+    val angle1Deg = params.angle1.toFloat()
+    val angle2Deg = params.angle2.toFloat()
+    val a1Rad = angle1Deg * PI.toFloat() / 180f
+    val a2Rad = angle2Deg * PI.toFloat() / 180f
+
+    val cutW1 = W * tan(a1Rad / 2f)
+    val cutW2 = W * tan(a2Rad / 2f)
+
+    val margin = 30f
+    val bottomMargin = 60f
+    val availW = cw - margin * 2f
+    val availH = ch - bottomMargin - margin
+
+    val totalLen = b1 + b2
+    val sc = minOf(availW / totalLen, availH / (totalLen * 0.5f))
+
+    val seg1Len = b1 * sc
+    val seg2Len = b2 * sc
+
+    val startX = margin
+    val startY = ch - bottomMargin
+    val trailW = maxOf(8f, W / 2000f * cw)
+
+    // 第一段（水平）
+    val seg1End = Offset(startX + seg1Len, startY)
+    val seg1Path = Path().apply {
+        moveTo(startX, startY - trailW)
+        lineTo(seg1End.x, seg1End.y - trailW)
+        lineTo(seg1End.x, seg1End.y + trailW)
+        lineTo(startX, startY + trailW)
+        close()
+    }
+    drawPath(seg1Path, Color(0x3042A5F5))
+    drawPath(seg1Path, Color(0xFF1565C0), style = Stroke(width = 2f))
+
+    // 第二段（转折1）
+    val turn1X = seg1End.x + seg2Len * cos(a1Rad)
+    val turn1Y = seg1End.y - seg2Len * sin(a1Rad)
+    val seg2Path = Path().apply {
+        moveTo(seg1End.x, seg1End.y - trailW)
+        lineTo(turn1X, turn1Y - trailW)
+        lineTo(turn1X, turn1Y + trailW)
+        lineTo(seg1End.x, seg1End.y + trailW)
+        close()
+    }
+    drawPath(seg2Path, Color(0x302E7D32))
+    drawPath(seg2Path, Color(0xFF2E7D32), style = Stroke(width = 2f))
+
+    // 标注
+    drawText("第一段=%.1fcm".format(b1 / 10f), margin, margin + 10f * density,
+        Color(0xFF212121), 11f * density, true)
+    drawText("角度1=${angle1Deg.toInt()}°", margin, margin + 28f * density,
+        Color(0xFF212121), 11f * density, true)
+    drawText("第二段=%.1fcm".format(b2 / 10f), margin, margin + 46f * density,
+        Color(0xFF212121), 11f * density, true)
+    drawText("角度2=${angle2Deg.toInt()}°", margin, margin + 64f * density,
+        Color(0xFF212121), 11f * density, true)
+    drawText("切口1=%.2fcm".format(cutW1 / 10f), cw - margin - 80f * density, margin + 10f * density,
+        Color(0xFFC62828), 11f * density, true)
+    drawText("切口2=%.2fcm".format(cutW2 / 10f), cw - margin - 80f * density, margin + 28f * density,
+        Color(0xFFC62828), 11f * density, true)
 }
 
 private fun DrawScope.drawBrickWall(x: Float, bottomY: Float, height: Float, width: Float) {
