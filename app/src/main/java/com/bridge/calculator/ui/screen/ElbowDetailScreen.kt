@@ -27,7 +27,7 @@ import com.bridge.calculator.ui.viewmodel.ElbowDetailViewModel
 @Composable
 fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
     val viewModel = remember { ElbowDetailViewModel(elbowSpec) }
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
     val tabTitles = listOf("计算图", "划线图", "3D模型")
 
     Scaffold(
@@ -79,6 +79,10 @@ fun ElbowDetailScreen(elbowSpec: ElbowSpec, onBack: () -> Unit) {
                         2 -> BridgeElbowScene(
                             params = viewModel.params,
                             modelType = elbowSpec.modelType,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        else -> CalculationView(
+                            params = viewModel.params,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
