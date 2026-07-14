@@ -994,7 +994,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
     val titleH = 18f * density
 
     // 标题
-    drawText("划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+    drawText("【爬坡弯头】划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
 
     // ── 上方：侧板展开图（最大区域）──
     val sideTop = titleH + 8f * density
@@ -1006,7 +1006,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
     val bottomTop = sideTop + sideH + 12f * density
     val bottomH = ch * 0.22f
     val bottomW = cw * 0.55f
-    drawBottomPanel3D(margin, bottomTop, bottomW, bottomH, params)
+    drawBottomPanelRamp(margin, bottomTop, bottomW, bottomH, params)
 
     // ── 下方右：3D线框模型 ──
     val wireX = margin + bottomW + 10f * density
@@ -1017,7 +1017,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
     // ── 最下方：关键尺寸汇总 ──
     val sumY = bottomTop + bottomH + 10f * density
     val fontSize = 10f * density
-    drawText("切口宽=${"%.1f".format(W/10f)}cm  深=${"%.1f".format(cutDepth/10f)}cm  起坡=${"%.1f".format(baseX/10f)}cm  角度=${angleDeg.toInt()}°",
+    drawText("▲侧板切口：深=${"%.1f".format(cutDepth/10f)}cm  起坡=${"%.1f".format(baseX/10f)}cm  角度=${angleDeg.toInt()}°  桥架宽=${"%.1f".format(W/10f)}cm",
         cw / 2f, sumY, Color(0xFFC62828), fontSize, true)
 }
 
@@ -1114,6 +1114,106 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
     // 切口标注（内部）
     drawText("x=${"%.1f".format(cutDepth/10f)}cm",
         bendX, oy + h - 6f * density, Color(0xFFC62828), 8f * density, true)
+}
+
+/** 水平弯头专用 — 侧板展开图（无切口，水平弯切口在底板上） */
+private fun DrawScope.drawSidePanelHorizontal(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
+    val H = params.height.toFloat()
+    val b = params.distance.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+    val baseX = b * tan(aRad / 2f)
+
+    // 侧板矩形（3D透视）
+    val skew = h * 0.12f
+    val panelPath = Path().apply {
+        moveTo(ox + skew, oy)
+        lineTo(ox + w, oy)
+        lineTo(ox + w - skew, oy + h)
+        lineTo(ox, oy + h)
+        close()
+    }
+    drawPath(panelPath, Color(0xFFD6EAF8))
+    drawPath(panelPath, Color(0xFF2980B9), style = Stroke(width = 2f))
+
+    // 折弯线位置
+    val bendFrac = baseX / b.coerceAtLeast(1f)
+    val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
+    val bendSkewTop = skew * (1f - bendFrac)
+    val bendSkewBot = skew * bendFrac
+    val bendTop = Offset(bendX + bendSkewTop, oy)
+    val bendBot = Offset(bendX - bendSkewBot, oy + h)
+
+    // 折弯线（蓝色虚线）— 水平弯头侧板不切割，只折弯
+    drawPath(Path().apply { moveTo(bendTop.x, bendTop.y); lineTo(bendBot.x, bendBot.y) },
+        Color(0xFF1565C0), style = Stroke(width = 2f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))))
+
+    // ── 尺寸标注 ──
+    val dimColor = Color(0xFFC62828)
+    val dimY1 = oy - 10f * density
+
+    // 上方：起坡距离
+    drawDimLineH(ox + skew, bendX + bendSkewTop, dimY1,
+        "起坡${"%.1f".format(baseX / 10f)}cm", color = dimColor)
+
+    // 上方：剩余距离
+    drawDimLineH(bendX + bendSkewTop, ox + w, dimY1,
+        "剩余${"%.1f".format((b - baseX) / 10f)}cm", color = dimColor)
+
+    // 右侧：边高标注
+    drawDimLineV(oy, oy + h, ox + w + 14f * density,
+        "边高${"%.1f".format(H / 10f)}cm", color = dimColor, left = false)
+
+    // 面板标签
+    drawText("侧板(不切割)", ox + w / 2f, oy + h / 2f,
+        Color(0xFF2980B9).copy(alpha = 0.5f), 10f * density, true)
+
+    // 折弯标注
+    drawText("折弯线", bendX + bendSkewTop + 4f * density, oy + 12f * density,
+        Color(0xFF1565C0), 8f * density)
+}
+
+/** 爬坡专用 — 底板展开图（无切口，爬坡切口在侧板上） */
+private fun DrawScope.drawBottomPanelRamp(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
+    val W = params.width.toFloat()
+    val b = params.distance.toFloat()
+    val angleDeg = params.angle.toFloat()
+    val aRad = angleDeg * PI.toFloat() / 180f
+    val baseX = b * tan(aRad / 2f)
+
+    // 底板矩形
+    drawRect(Color(0xFFE8F5E9), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h))
+    drawRect(Color(0xFF2E7D32), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h), style = Stroke(width = 2f))
+
+    // 折弯线位置
+    val bendFrac = baseX / b.coerceAtLeast(1f)
+    val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
+
+    // 折弯线（蓝色虚线）— 爬坡底板不切割
+    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
+        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
+
+    // ── 尺寸标注 ──
+    val dimColor = Color(0xFFC62828)
+
+    // 上方：总长
+    drawDimLineH(ox, ox + w, oy - 8f * density,
+        "总长${"%.1f".format(b / 10f)}cm", color = dimColor)
+
+    // 下方：桥架宽度
+    drawDimLineV(oy, oy + h, ox + w + 14f * density,
+        "宽${"%.1f".format(W / 10f)}cm", color = dimColor, left = false)
+
+    // 面板标签
+    drawText("底板(不切割)", ox + w / 2f, oy + h / 2f,
+        Color(0xFF2E7D32).copy(alpha = 0.5f), 10f * density, true)
+
+    // 折弯标注
+    drawText("折弯线", bendX + 4f * density, oy + h - 6f * density,
+        Color(0xFF1565C0), 8f * density)
 }
 
 /** 绘制底板3D透视展开图 */
@@ -1259,16 +1359,16 @@ private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float
     var curY = 6f * density
 
     // ── 标题 ──
-    drawText("水平弯头划线图", cw / 2f, curY + labelH, Color(0xFF2C3E50), 13f * density, true)
+    drawText("【水平弯头】划线展开图", cw / 2f, curY + labelH, Color(0xFF2C3E50), 13f * density, true)
     curY += labelH * 2f
 
-    // ─ 侧板展开图 ──
+    // ── 侧板展开图（水平弯头侧板不切割） ──
     val sideH = ch * 0.22f
     val sideW = cw - margin * 2f
-    drawSidePanel3D(margin, curY, sideW, sideH, params)
+    drawSidePanelHorizontal(margin, curY, sideW, sideH, params)
     curY += sideH + gap
 
-    // ── 底板展开图 ──
+    // ── 底板展开图（水平弯头切口在底板） ──
     val botH = ch * 0.28f
     val botW = cw - margin * 2f
     drawBottomPanelFull(margin, curY, botW, botH, params)
@@ -1281,13 +1381,13 @@ private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float
 
     // ── 关键尺寸汇总 ─
     val fs = 10f * density
-    drawText("桥架宽=${"%.1f".format(W/10f)}cm  边高=${"%.1f".format(H/10f)}cm  角度=${angleDeg.toInt()}°",
+    drawText("【水平弯头】桥架宽=${"%.1f".format(W/10f)}cm  边高=${"%.1f".format(H/10f)}cm  角度=${angleDeg.toInt()}°",
         cw / 2f, curY, Color(0xFF2C3E50), fs, true)
     curY += labelH
-    drawText("下料x=${"%.2f".format(cutDepth/10f)}cm  下料一半=${"%.2f".format(cutHalf/10f)}cm",
+    drawText("▼底板切口：下料x=${"%.2f".format(cutDepth/10f)}cm  一半=${"%.2f".format(cutHalf/10f)}cm",
         cw / 2f, curY, Color(0xFFC62828), fs, true)
     curY += labelH
-    drawText("起坡距离=${"%.1f".format(baseX/10f)}cm  剩余=${"%.1f".format((b - baseX)/10f)}cm",
+    drawText("起坡位置=${"%.1f".format(baseX/10f)}cm  剩余=${"%.1f".format((b - baseX)/10f)}cm  斜边=${"%.1f".format((b / cos(aRad/2f))/10f)}cm",
         cw / 2f, curY, Color(0xFF27AE60), fs, true)
 }
 
@@ -1442,7 +1542,7 @@ private fun DrawScope.drawTeeCuttingGuide3D(params: CalcParams, cw: Float, ch: F
     val H = params.height.toFloat()
     val margin = 20f * density
     val titleH = 18f * density
-    drawText("三通划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+    drawText("【三通】划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
 
     // 主管展开图
     val mainTop = titleH + 10f * density
@@ -1483,7 +1583,7 @@ private fun DrawScope.drawReducingCuttingGuide3D(params: CalcParams, cw: Float, 
     val w2 = params.afterWidth.toFloat()
     val margin = 20f * density
     val titleH = 18f * density
-    drawText("变径划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+    drawText("【变径】划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
 
     // 梯形展开图
     val top = titleH + 10f * density
@@ -1529,7 +1629,7 @@ private fun DrawScope.drawCompositeCuttingGuide3D(params: CalcParams, cw: Float,
 
     val margin = 20f * density
     val titleH = 18f * density
-    drawText("组合翻弯划线图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
+    drawText("【组合翻弯】划线展开图", cw / 2f, titleH, Color(0xFF2C3E50), 14f * density, true)
 
     // 侧板展开图
     val sideTop = titleH + 10f * density
