@@ -1141,7 +1141,7 @@ private fun DrawScope.drawSidePanelHorizontal(ox: Float, oy: Float, w: Float, h:
         Color(0xFF2980B9).copy(alpha = 0.5f), 10f * density, true)
 
     // 折弯标注
-    drawText("折弯线", bendX + bendSkewTop + 4f * density, oy + 12f * density,
+    drawText("折弯线", bendX + 5f * density, oy + 12f * density,
         Color(0xFF1565C0), 8f * density)
 }
 
