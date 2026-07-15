@@ -1153,9 +1153,9 @@ private fun DrawScope.drawSidePanelHorizontal(ox: Float, oy: Float, w: Float, h:
     val dimColor = Color(0xFFC62828)
     val dimY1 = oy - 10f * density
 
-    // 上方：起坡距离
+    // 上方：折弯位置
     drawDimLineH(ox + skew, bendX + bendSkewTop, dimY1,
-        "起坡${"%.1f".format(baseX / 10f)}cm", color = dimColor)
+        "折弯${"%.1f".format(baseX / 10f)}cm", color = dimColor)
 
     // 上方：剩余距离
     drawDimLineH(bendX + bendSkewTop, ox + w, dimY1,
@@ -1212,66 +1212,6 @@ private fun DrawScope.drawBottomPanelRamp(ox: Float, oy: Float, w: Float, h: Flo
         Color(0xFF2E7D32).copy(alpha = 0.5f), 10f * density, true)
 
     // 折弯标注
-    drawText("折弯线", bendX + 4f * density, oy + h - 6f * density,
-        Color(0xFF1565C0), 8f * density)
-}
-
-/** 绘制底板3D透视展开图 */
-private fun DrawScope.drawBottomPanel3D(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
-    val W = params.width.toFloat()
-    val b = params.distance.toFloat()
-    val angleDeg = params.angle.toFloat()
-    val aRad = angleDeg * PI.toFloat() / 180f
-
-    val baseX = b * tan(aRad / 2f)
-
-    // 底板矩形
-    drawRect(Color(0xFFE8F5E9), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(w, h))
-    drawRect(Color(0xFF2E7D32), Offset(ox, oy),
-        androidx.compose.ui.geometry.Size(w, h), style = Stroke(width = 2f))
-
-    // 中间竖线（折弯线位置）
-    val bendFrac = baseX / b.coerceAtLeast(1f)
-    val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
-
-    // 折弯线（蓝色虚线）
-    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
-        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
-
-    // V形切口（从顶边切入，底边在折弯线）
-    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w
-    val cutDepthPx = h * 0.7f
-
-    val vPath = Path().apply {
-        moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + cutDepthPx)
-        lineTo(bendX + cutHalfW, oy)
-    }
-    drawPath(vPath, Color(0xFFE74C3C), style = Stroke(width = 2.5f))
-
-    val vFill = Path().apply {
-        moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + cutDepthPx)
-        lineTo(bendX + cutHalfW, oy)
-        close()
-    }
-    drawPath(vFill, Color(0x30E74C3C))
-
-    // 尺寸标注
-    val dimColor = Color(0xFFC62828)
-    drawDimLineH(ox, bendX, oy - 8f * density,
-        "%.1fcm".format(baseX / 10f), color = dimColor)
-    drawDimLineH(bendX, ox + w, oy - 8f * density,
-        "%.1fcm".format((b - baseX) / 10f), color = dimColor)
-
-    // 切口宽度标注
-    drawText("切口宽=${"%.1f".format(W/10f)}cm",
-        bendX, oy + h + 10f * density, dimColor, 9f * density, true)
-
-    // 标签
-    drawText("底板展开图", ox + w / 2f, oy + h / 2f,
-        Color(0xFF2E7D32).copy(alpha = 0.4f), 10f * density, true)
     drawText("折弯线", bendX + 4f * density, oy + h - 6f * density,
         Color(0xFF1565C0), 8f * density)
 }
@@ -1387,7 +1327,7 @@ private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float
     drawText("▼底板切口：下料x=${"%.2f".format(cutDepth/10f)}cm  一半=${"%.2f".format(cutHalf/10f)}cm",
         cw / 2f, curY, Color(0xFFC62828), fs, true)
     curY += labelH
-    drawText("起坡位置=${"%.1f".format(baseX/10f)}cm  剩余=${"%.1f".format((b - baseX)/10f)}cm  斜边=${"%.1f".format((b / cos(aRad/2f))/10f)}cm",
+    drawText("折弯位置=${"%.1f".format(baseX/10f)}cm  剩余=${"%.1f".format((b - baseX)/10f)}cm  斜边=${"%.1f".format((b / cos(aRad/2f))/10f)}cm",
         cw / 2f, curY, Color(0xFF27AE60), fs, true)
 }
 
