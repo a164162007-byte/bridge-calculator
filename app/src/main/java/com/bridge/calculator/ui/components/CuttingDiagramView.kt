@@ -1021,7 +1021,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
         cw / 2f, sumY, Color(0xFFC62828), fontSize, true)
 }
 
-/** 绘制侧板3D透视展开图 */
+/** 绘制侧板展开图（纯平面，V切口在上下边缘） */
 private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
     val W = params.width.toFloat()
     val H = params.height.toFloat()
@@ -1032,60 +1032,42 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
     val baseX = b * tan(aRad / 2f)
     val cutDepth = W * tan(aRad / 2f)
 
-    // 侧板矩形（3D透视效果：稍微倾斜）
-    val skew = h * 0.12f  // 透视偏移
-    val panelPath = Path().apply {
-        moveTo(ox + skew, oy)            // 左上
-        lineTo(ox + w, oy)               // 右上
-        lineTo(ox + w - skew, oy + h)    // 右下
-        lineTo(ox, oy + h)               // 左下
-        close()
-    }
-    drawPath(panelPath, Color(0xFFD6EAF8))
-    drawPath(panelPath, Color(0xFF2980B9), style = Stroke(width = 2f))
-
-    // 中间横线（底板位置）
-    val midY = oy + h * 0.5f
-    val midLeft = Offset(ox + skew * 0.5f, midY)
-    val midRight = Offset(ox + w - skew * 0.5f, midY)
-    drawLine(Color(0xFF2980B9).copy(alpha = 0.3f), midLeft, midRight, strokeWidth = 1f)
+    // 侧板矩形（纯平面，不扭曲）
+    drawRect(Color(0xFFD6EAF8), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h))
+    drawRect(Color(0xFF2980B9), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h), style = Stroke(width = 2f))
 
     // 折弯线位置（按比例）
     val bendFrac = baseX / b.coerceAtLeast(1f)
     val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
-    val bendSkewTop = skew * (1f - bendFrac)
-    val bendSkewBot = skew * bendFrac
-    val bendTop = Offset(bendX + bendSkewTop, oy)
-    val bendBot = Offset(bendX - bendSkewBot, oy + h)
 
     // 折弯线（蓝色虚线）
-    drawPath(Path().apply { moveTo(bendTop.x, bendTop.y); lineTo(bendBot.x, bendBot.y) },
-        Color(0xFF1565C0), style = Stroke(width = 2f,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))))
+    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
+        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
-    // 切口位置（折弯线两侧，V形三角）
-    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w  // 切口半宽在画布上的像素
-    val cutDepthPx = cutDepth / H.coerceAtLeast(1f) * h * 0.8f
+    // ── V形切口（上边缘和下边缘各一个，对齐陈工图解）──
+    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w  // 切口半宽（像素）
+    val cutDepthPx = cutDepth / H.coerceAtLeast(1f) * h  // 切口深度（按实际比例，无硬编码）
 
-    // 上方切口三角（从顶边切入）
     val cutLeft = bendX - cutHalfW
     val cutRight = bendX + cutHalfW
 
-    // 上三角（顶点朝下，底边在顶边）
+    // 上边缘V切口（底边在顶边，顶点朝下指向折弯线）
     val triTopPath = Path().apply {
-        moveTo(cutLeft + bendSkewTop, oy)
-        lineTo(cutRight + bendSkewTop, oy)
-        lineTo(bendTop.x, bendTop.y + cutDepthPx * 0.5f)
+        moveTo(cutLeft, oy)
+        lineTo(cutRight, oy)
+        lineTo(bendX, oy + cutDepthPx)
         close()
     }
     drawPath(triTopPath, Color(0x40E74C3C))
     drawPath(triTopPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
 
-    // 下三角（从底边切入）
+    // 下边缘V切口（底边在底边，顶点朝上指向折弯线）
     val triBotPath = Path().apply {
-        moveTo(cutLeft - bendSkewBot, oy + h)
-        lineTo(cutRight - bendSkewBot, oy + h)
-        lineTo(bendBot.x, bendBot.y - cutDepthPx * 0.5f)
+        moveTo(cutLeft, oy + h)
+        lineTo(cutRight, oy + h)
+        lineTo(bendX, oy + h - cutDepthPx)
         close()
     }
     drawPath(triBotPath, Color(0x40E74C3C))
@@ -1095,24 +1077,24 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
     val dimColor = Color(0xFFC62828)
     val dimY1 = oy - 10f * density
 
-    // 上方：起坡距离
-    drawDimLineH(ox + skew, bendX + bendSkewTop, dimY1,
+    // 上方：折弯位置距离
+    drawDimLineH(ox, bendX, dimY1,
         "%.1fcm".format(baseX / 10f), color = dimColor)
 
     // 上方：剩余距离
-    drawDimLineH(bendX + bendSkewTop, ox + w, dimY1,
+    drawDimLineH(bendX, ox + w, dimY1,
         "%.1fcm".format((b - baseX) / 10f), color = dimColor)
 
-    // 面板标签（内部，不超出边界）
-    drawText("侧板展开图", ox + w / 2f, oy + h / 2f - 4f * density,
+    // 面板标签
+    drawText("侧板(切口)", ox + w / 2f, oy + h / 2f - 4f * density,
         Color(0xFF2980B9).copy(alpha = 0.35f), 10f * density, true)
 
-    // 折弯标注（内部顶部）
-    drawText("折弯线", bendX + bendSkewTop + 4f * density, oy + 12f * density,
+    // 折弯标注
+    drawText("折弯线", bendX + 5f * density, oy + 12f * density,
         Color(0xFF1565C0), 8f * density)
 
-    // 切口标注（内部）
-    drawText("x=${"%.1f".format(cutDepth/10f)}cm",
+    // 切口标注
+    drawText("下料x=${"%.1f".format(cutDepth/10f)}cm",
         bendX, oy + h - 6f * density, Color(0xFFC62828), 8f * density, true)
 }
 
@@ -1124,41 +1106,30 @@ private fun DrawScope.drawSidePanelHorizontal(ox: Float, oy: Float, w: Float, h:
     val aRad = angleDeg * PI.toFloat() / 180f
     val baseX = b * tan(aRad / 2f)
 
-    // 侧板矩形（3D透视）
-    val skew = h * 0.12f
-    val panelPath = Path().apply {
-        moveTo(ox + skew, oy)
-        lineTo(ox + w, oy)
-        lineTo(ox + w - skew, oy + h)
-        lineTo(ox, oy + h)
-        close()
-    }
-    drawPath(panelPath, Color(0xFFD6EAF8))
-    drawPath(panelPath, Color(0xFF2980B9), style = Stroke(width = 2f))
+    // 侧板矩形（纯平面，不扭曲）
+    drawRect(Color(0xFFD6EAF8), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h))
+    drawRect(Color(0xFF2980B9), Offset(ox, oy),
+        androidx.compose.ui.geometry.Size(w, h), style = Stroke(width = 2f))
 
     // 折弯线位置
     val bendFrac = baseX / b.coerceAtLeast(1f)
     val bendX = ox + w * bendFrac.coerceIn(0.15f, 0.85f)
-    val bendSkewTop = skew * (1f - bendFrac)
-    val bendSkewBot = skew * bendFrac
-    val bendTop = Offset(bendX + bendSkewTop, oy)
-    val bendBot = Offset(bendX - bendSkewBot, oy + h)
 
     // 折弯线（蓝色虚线）— 水平弯头侧板不切割，只折弯
-    drawPath(Path().apply { moveTo(bendTop.x, bendTop.y); lineTo(bendBot.x, bendBot.y) },
-        Color(0xFF1565C0), style = Stroke(width = 2f,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))))
+    drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
+        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
     // ── 尺寸标注 ──
     val dimColor = Color(0xFFC62828)
     val dimY1 = oy - 10f * density
 
     // 上方：折弯位置
-    drawDimLineH(ox + skew, bendX + bendSkewTop, dimY1,
+    drawDimLineH(ox, bendX, dimY1,
         "折弯${"%.1f".format(baseX / 10f)}cm", color = dimColor)
 
     // 上方：剩余距离
-    drawDimLineH(bendX + bendSkewTop, ox + w, dimY1,
+    drawDimLineH(bendX, ox + w, dimY1,
         "剩余${"%.1f".format((b - baseX) / 10f)}cm", color = dimColor)
 
     // 右侧：边高标注
@@ -1278,7 +1249,7 @@ private fun DrawScope.drawWireframeBentTray(ox: Float, oy: Float, w: Float, h: F
         Offset(cx + rampL / 2f + backOff - skewX, cy - rampRise - trayH - backOff * 0.5f), strokeWidth = 1f)
 
     // 标签
-    drawText("3D模型", cx, oy + 10f * density,
+    drawText("弯头示意", cx, oy + 10f * density,
         Color(0xFF7F8C8D), 9f * density, true)
 }
 
@@ -1334,6 +1305,7 @@ private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float
 /** 底板展开图 — 完整版：V形切口 + 完整尺寸标注 */
 private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Float, params: CalcParams) {
     val W = params.width.toFloat()
+    val H = params.height.toFloat()
     val b = params.distance.toFloat()
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
@@ -1356,7 +1328,7 @@ private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Flo
 
     // V形切口（从顶边切入）
     val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w
-    val cutDepthPx = h * 0.6f
+    val cutDepthPx = cutDepth / W.coerceAtLeast(1f) * h  // 底板切口按桥架宽度比例
 
     val vPath = Path().apply {
         moveTo(bendX - cutHalfW, oy)
