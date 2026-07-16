@@ -59,6 +59,7 @@ fun CalculationView(
 /** 爬坡弯头计算图 — 砖墙+直角三角形+尺寸标注 */
 private fun DrawScope.drawRampCalculation(params: CalcParams, cw: Float, ch: Float) {
     val W = params.width.toFloat()
+    val H = params.height.toFloat()
     val b = params.distance.toFloat()
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
@@ -66,7 +67,7 @@ private fun DrawScope.drawRampCalculation(params: CalcParams, cw: Float, ch: Flo
     val baseX = b * tan(aRad / 2f)
     val hypL = b / sin(aRad)
     val riseH = b * tan(aRad)
-    val cutW = W * tan(aRad / 2f)
+    val cutW = 2f * H * tan(aRad / 2f)  // 下料x = 2H*tan(a/2)
     val cutHalf = cutW / 2f
 
     val angleA = 90f
@@ -135,7 +136,7 @@ private fun DrawScope.drawHorizontalCalculation(params: CalcParams, cw: Float, c
     val W = params.width.toFloat()
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
-    val cutW = W * tan(aRad / 2f)
+    val cutW = 2f * W * tan(aRad / 2f)  // 下料x = 2W*tan(a/2)
     val cutHalf = cutW / 2f
 
     val margin = 40f
@@ -610,8 +611,8 @@ private fun DrawScope.drawRampCutting(params: CalcParams, results: List<CalcResu
     val baseX = b * tan(aRad / 2f)
     val hypL = b / sin(aRad)
     val riseH = b * tan(aRad)
-    // 切口深度 = W * tan(α/2)
-    val cutDepth = W * tan(aRad / 2f)
+    // 下料x = 2H*tan(a/2)
+    val cutDepth = 2f * H * tan(aRad / 2f)
 
     val cw = size.width
     val ch = size.height
@@ -696,7 +697,7 @@ private fun DrawScope.drawHorizontalCutting(params: CalcParams, results: List<Ca
 
     val baseX = b * tan(aRad / 2f)
     val hypL = b / sin(aRad)
-    val cutDepth = W * tan(aRad / 2f)
+    val cutDepth = 2f * W * tan(aRad / 2f)  // 下料x = 2W*tan(a/2)
 
     val cw = size.width
     val ch = size.height
@@ -845,8 +846,8 @@ private fun DrawScope.drawCompositeCutting(params: CalcParams, results: List<Cal
     val a2Rad = params.angle2.toFloat() * PI.toFloat() / 180f
 
     val W = params.width.toFloat()
-    val cutDepth1 = W * tan(a1Rad / 2f)
-    val cutDepth2 = W * tan(a2Rad / 2f)
+    val cutDepth1 = 2f * W * tan(a1Rad / 2f)  // 下料x = 2W*tan(a/2)
+    val cutDepth2 = 2f * W * tan(a2Rad / 2f)  // 下料x = 2W*tan(a/2)
 
     val cw = size.width
     val ch = size.height
@@ -897,6 +898,7 @@ private fun DrawScope.drawCompositeCutting(params: CalcParams, results: List<Cal
 // ================================================================
 private fun DrawScope.drawFoldedCutting(params: CalcParams, results: List<CalcResult>) {
     val W = params.width.toFloat()
+    val H = params.height.toFloat()
     val b = params.distance.toFloat()
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
@@ -904,7 +906,7 @@ private fun DrawScope.drawFoldedCutting(params: CalcParams, results: List<CalcRe
     val baseX = b * tan(aRad / 2f)
     val hypL = b / sin(aRad)
     val riseH = b * tan(aRad)
-    val cutDepth = W * tan(aRad / 2f)
+    val cutDepth = 2f * H * tan(aRad / 2f)  // 下料x = 2H*tan(a/2)
 
     val cw = size.width
     val ch = size.height
@@ -987,7 +989,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
 
     // 切割参数
     val baseX = b * tan(aRad / 2f)     // 起坡距离
-    val cutDepth = W * tan(aRad / 2f)  // 侧板切口深度
+    val cutDepth = 2f * H * tan(aRad / 2f)  // 下料x = 2H*tan(a/2)
 
     // ── 布局参数 ──
     val margin = 20f * density
@@ -1017,7 +1019,7 @@ private fun DrawScope.drawRampCuttingGuide3D(params: CalcParams, cw: Float, ch: 
     // ── 最下方：关键尺寸汇总 ──
     val sumY = bottomTop + bottomH + 10f * density
     val fontSize = 10f * density
-    drawText("▲侧板切口：深=${"%.1f".format(cutDepth/10f)}cm  起坡=${"%.1f".format(baseX/10f)}cm  角度=${angleDeg.toInt()}°  桥架宽=${"%.1f".format(W/10f)}cm",
+    drawText("▲侧板切口：下料x=${"%.1f".format(cutDepth/10f)}cm  x/2=${"%.1f".format(cutDepth/20f)}cm  起坡=${"%.1f".format(baseX/10f)}cm  边高=${"%.1f".format(H/10f)}cm",
         cw / 2f, sumY, Color(0xFFC62828), fontSize, true)
 }
 
@@ -1030,7 +1032,7 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
     val aRad = angleDeg * PI.toFloat() / 180f
 
     val baseX = b * tan(aRad / 2f)
-    val cutDepth = W * tan(aRad / 2f)
+    val cutDepth = 2f * H * tan(aRad / 2f)  // 下料x = 2H*tan(a/2)
 
     // 侧板矩形（纯平面，不扭曲）
     drawRect(Color(0xFFD6EAF8), Offset(ox, oy),
@@ -1047,31 +1049,20 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
         strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
     // ── V形切口（上边缘和下边缘各一个，对齐陈工图解）──
-    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w  // 切口半宽（像素）
-    val cutDepthPx = cutDepth / H.coerceAtLeast(1f) * h  // 切口深度（按实际比例，无硬编码）
+    val cutHalfW = (H * tan(aRad / 2f)) / b.coerceAtLeast(1f) * w  // 切口半宽=H*tan(a/2) px
 
     val cutLeft = bendX - cutHalfW
     val cutRight = bendX + cutHalfW
 
-    // 上边缘V切口（底边在顶边，顶点朝下指向折弯线）
-    val triTopPath = Path().apply {
+    // V形切口：单个三角形，底边在顶边，顶点在底边折弯线处，贯穿整板高度
+    val vCutPath = Path().apply {
         moveTo(cutLeft, oy)
         lineTo(cutRight, oy)
-        lineTo(bendX, oy + cutDepthPx)
+        lineTo(bendX, oy + h)
         close()
     }
-    drawPath(triTopPath, Color(0x40E74C3C))
-    drawPath(triTopPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
-
-    // 下边缘V切口（底边在底边，顶点朝上指向折弯线）
-    val triBotPath = Path().apply {
-        moveTo(cutLeft, oy + h)
-        lineTo(cutRight, oy + h)
-        lineTo(bendX, oy + h - cutDepthPx)
-        close()
-    }
-    drawPath(triBotPath, Color(0x40E74C3C))
-    drawPath(triBotPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
+    drawPath(vCutPath, Color(0x40E74C3C))
+    drawPath(vCutPath, Color(0xFFE74C3C), style = Stroke(width = 2f))
 
     // ── 尺寸标注（红色双箭头）──
     val dimColor = Color(0xFFC62828)
@@ -1086,7 +1077,7 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
         "%.1fcm".format((b - baseX) / 10f), color = dimColor)
 
     // 面板标签
-    drawText("侧板(切口)", ox + w / 2f, oy + h / 2f - 4f * density,
+    drawText("侧板(切口)", ox + w / 2f, oy + h * 0.75f,
         Color(0xFF2980B9).copy(alpha = 0.35f), 10f * density, true)
 
     // 折弯标注
@@ -1094,7 +1085,7 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
         Color(0xFF1565C0), 8f * density)
 
     // 切口标注
-    drawText("下料x=${"%.1f".format(cutDepth/10f)}cm",
+    drawText("下料x=${"%.1f".format(cutDepth/10f)}cm  x/2=${"%.1f".format(cutDepth/20f)}cm",
         bendX, oy + h - 6f * density, Color(0xFFC62828), 8f * density, true)
 }
 
@@ -1261,8 +1252,8 @@ private fun DrawScope.drawHorizontalCuttingGuide3D(params: CalcParams, cw: Float
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
     val baseX = b * tan(aRad / 2f)
-    val cutDepth = W * tan(aRad / 2f)
-    val cutHalf = cutDepth / 2f
+    val cutDepth = 2f * W * tan(aRad / 2f)  // 下料x = 2W*tan(a/2)
+    val cutHalf = cutDepth / 2f  // x/2 = W*tan(a/2)
 
     val margin = 24f * density
     val gap = 10f * density
@@ -1310,7 +1301,7 @@ private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Flo
     val angleDeg = params.angle.toFloat()
     val aRad = angleDeg * PI.toFloat() / 180f
     val baseX = b * tan(aRad / 2f)
-    val cutDepth = W * tan(aRad / 2f)
+    val cutDepth = 2f * W * tan(aRad / 2f)  // 下料x = 2W*tan(a/2)
 
     // 底板矩形
     drawRect(Color(0xFFE8F5E9), Offset(ox, oy),
@@ -1327,18 +1318,17 @@ private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Flo
         strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
     // V形切口（从顶边切入）
-    val cutHalfW = (W / 2f) / b.coerceAtLeast(1f) * w
-    val cutDepthPx = cutDepth / W.coerceAtLeast(1f) * h  // 底板切口按桥架宽度比例
+    val cutHalfW = (W * tan(aRad / 2f)) / b.coerceAtLeast(1f) * w  // 切口半宽=W*tan(a/2) px
 
     val vPath = Path().apply {
         moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + cutDepthPx)
+        lineTo(bendX, oy + h)
         lineTo(bendX + cutHalfW, oy)
     }
     drawPath(vPath, Color(0xFFE74C3C), style = Stroke(width = 2.5f))
     val vFill = Path().apply {
         moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + cutDepthPx)
+        lineTo(bendX, oy + h)
         lineTo(bendX + cutHalfW, oy)
         close()
     }
@@ -1353,11 +1343,11 @@ private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Flo
 
     // ── 切口宽度标注（下方，延伸到边缘）──
     drawDimLineH(bendX - cutHalfW, bendX + cutHalfW, oy + h + 14f * density,
-        "切口宽=%.1fcm".format(W / 10f), color = dimColor, above = false)
+        "下料x=%.1fcm".format(cutDepth / 10f), color = dimColor, above = false)
 
     // ── 切口深度标注 ─
-    drawDimLineV(oy, oy + cutDepthPx, bendX + cutHalfW + 16f * density,
-        "深=%.1fcm".format(cutDepth / 10f), color = dimColor, left = false)
+    drawDimLineV(oy, oy + h, bendX + cutHalfW + 16f * density,
+        "宽=%.1fcm".format(W / 10f), color = dimColor, left = false)
 
     // 标签
     drawText("底板展开图", ox + w / 2f, oy + h / 2f,
@@ -1536,8 +1526,8 @@ private fun DrawScope.drawCompositeCuttingGuide3D(params: CalcParams, cw: Float,
     val b2 = params.distance2.toFloat()
     val a2Rad = params.angle2.toFloat() * PI.toFloat() / 180f
     val W = params.width.toFloat()
-    val cutDepth1 = W * tan(a1Rad / 2f)
-    val cutDepth2 = W * tan(a2Rad / 2f)
+    val cutDepth1 = 2f * W * tan(a1Rad / 2f)  // 下料x = 2W*tan(a/2)
+    val cutDepth2 = 2f * W * tan(a2Rad / 2f)  // 下料x = 2W*tan(a/2)
 
     val margin = 20f * density
     val titleH = 18f * density
