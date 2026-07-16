@@ -195,7 +195,7 @@ private fun DrawScope.drawHorizontalCalculation(params: CalcParams, cw: Float, c
         Color(0xFFC62828), 13f * density, true)
 
     // 切口尺寸
-    drawText("切口宽=%.1fcm".format(W / 10f), margin, margin + 10f * density,
+    drawText("桥架宽=%.1fcm".format(W / 10f), margin, margin + 10f * density,
         Color(0xFF212121), 12f * density, true)
     drawText("下料x=%.2fcm".format(cutW / 10f), margin, margin + 30f * density,
         Color(0xFF212121), 12f * density, true)
@@ -1048,17 +1048,17 @@ private fun DrawScope.drawSidePanel3D(ox: Float, oy: Float, w: Float, h: Float, 
     drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
         strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
-    // ── V形切口（上边缘和下边缘各一个，对齐陈工图解）──
+    // ── V形切口（底边在底部边缘，尖端朝上，对齐陈工图解）──
     val cutHalfW = (H * tan(aRad / 2f)) / b.coerceAtLeast(1f) * w  // 切口半宽=H*tan(a/2) px
 
     val cutLeft = bendX - cutHalfW
     val cutRight = bendX + cutHalfW
 
-    // V形切口：单个三角形，底边在顶边，顶点在底边折弯线处，贯穿整板高度
+    // V形切口：单个三角形，底边在底部边缘，顶点在顶部折弯线处，贯穿整板高度
     val vCutPath = Path().apply {
-        moveTo(cutLeft, oy)
-        lineTo(cutRight, oy)
-        lineTo(bendX, oy + h)
+        moveTo(cutLeft, oy + h)
+        lineTo(cutRight, oy + h)
+        lineTo(bendX, oy)
         close()
     }
     drawPath(vCutPath, Color(0x40E74C3C))
@@ -1317,19 +1317,19 @@ private fun DrawScope.drawBottomPanelFull(ox: Float, oy: Float, w: Float, h: Flo
     drawLine(Color(0xFF1565C0), Offset(bendX, oy), Offset(bendX, oy + h),
         strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
 
-    // V形切口（从顶边切入）
+    // V形切口（底边在底部边缘，尖端朝上，贯穿整板）
     val cutHalfW = (W * tan(aRad / 2f)) / b.coerceAtLeast(1f) * w  // 切口半宽=W*tan(a/2) px
 
     val vPath = Path().apply {
-        moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + h)
-        lineTo(bendX + cutHalfW, oy)
+        moveTo(bendX - cutHalfW, oy + h)
+        lineTo(bendX, oy)
+        lineTo(bendX + cutHalfW, oy + h)
     }
     drawPath(vPath, Color(0xFFE74C3C), style = Stroke(width = 2.5f))
     val vFill = Path().apply {
-        moveTo(bendX - cutHalfW, oy)
-        lineTo(bendX, oy + h)
-        lineTo(bendX + cutHalfW, oy)
+        moveTo(bendX - cutHalfW, oy + h)
+        lineTo(bendX, oy)
+        lineTo(bendX + cutHalfW, oy + h)
         close()
     }
     drawPath(vFill, Color(0x30E74C3C))
@@ -1552,21 +1552,31 @@ private fun DrawScope.drawCompositeCuttingGuide3D(params: CalcParams, cw: Float,
     val cut1X = margin + sideW * bend1Frac
     val cut2X = margin + sideW * bend2Frac
 
-    // 切口1（V形三角）
+    // 切口半宽（像素，按公式计算）
+    val cut1HalfPx = (W * tan(a1Rad / 2f)) / totalLen.coerceAtLeast(1f) * sideW
+    val cut2HalfPx = (W * tan(a2Rad / 2f)) / totalLen.coerceAtLeast(1f) * sideW
+
+    // 折弯线（蓝色虚线）
+    drawLine(Color(0xFF1565C0), Offset(cut1X, sideTop), Offset(cut1X, sideTop + sideH),
+        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
+    drawLine(Color(0xFF1565C0), Offset(cut2X, sideTop), Offset(cut2X, sideTop + sideH),
+        strokeWidth = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)))
+
+    // 切口1（V形三角，底边在底部，顶点在顶部，贯穿整板）
     val cut1Path = Path().apply {
-        moveTo(cut1X - 8f*density, sideTop)
-        lineTo(cut1X, sideTop + sideH * 0.5f)
-        lineTo(cut1X + 8f*density, sideTop)
+        moveTo(cut1X - cut1HalfPx, sideTop + sideH)
+        lineTo(cut1X, sideTop)
+        lineTo(cut1X + cut1HalfPx, sideTop + sideH)
         close()
     }
     drawPath(cut1Path, Color(0x40E74C3C))
     drawPath(cut1Path, Color(0xFFE74C3C), style = Stroke(width = 2f))
 
-    // 切口2
+    // 切口2（V形三角，底边在底部，顶点在顶部，贯穿整板）
     val cut2Path = Path().apply {
-        moveTo(cut2X - 8f*density, sideTop)
-        lineTo(cut2X, sideTop + sideH * 0.5f)
-        lineTo(cut2X + 8f*density, sideTop)
+        moveTo(cut2X - cut2HalfPx, sideTop + sideH)
+        lineTo(cut2X, sideTop)
+        lineTo(cut2X + cut2HalfPx, sideTop + sideH)
         close()
     }
     drawPath(cut2Path, Color(0x40E74C3C))
