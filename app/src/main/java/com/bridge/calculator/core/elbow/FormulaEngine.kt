@@ -16,19 +16,19 @@ object FormulaEngine {
     fun calcBottomX(b: Double, alpha: Double): Double = b * tan(alpha * DEG_TO_RAD / 2)
     fun calcHypotenuse(b: Double, alpha: Double): Double = b / sin(alpha * DEG_TO_RAD)
     fun calcHeight(b: Double, alpha: Double): Double = b * tan(alpha * DEG_TO_RAD)
-    fun calcCutWidth(hypotenuse: Double, alpha: Double): Double = hypotenuse * sin(alpha * DEG_TO_RAD / 2)
+    fun calcCutWidth(dimension: Double, alpha: Double): Double = 2 * dimension * tan(alpha * DEG_TO_RAD / 2)
     
     object QuickCoefficients {
         const val ANGLE_30 = 0.536
         const val ANGLE_45 = 0.828
-        const val ANGLE_60 = 1.414
-        const val ANGLE_90 = 1.0
+        const val ANGLE_60 = 1.155
+        const val ANGLE_90 = 2.0
         fun getCoefficient(alpha: Double): Double = when {
             abs(alpha - 30.0) < 0.1 -> ANGLE_30
             abs(alpha - 45.0) < 0.1 -> ANGLE_45
             abs(alpha - 60.0) < 0.1 -> ANGLE_60
             abs(alpha - 90.0) < 0.1 -> ANGLE_90
-            else -> tan(alpha * DEG_TO_RAD / 2)
+            else -> 2 * tan(alpha * DEG_TO_RAD / 2)
         }
     }
     
@@ -55,12 +55,11 @@ object FormulaEngine {
         val x = calcBottomX(params.distance, params.angle)
         val l = calcHypotenuse(params.distance, params.angle)
         val h = calcHeight(params.distance, params.angle)
-        val cut = calcCutWidth(l, params.angle)
         return listOf(
             CalcResult("底边 X", x, "mm", "X = b × tan(α/2)"),
             CalcResult("斜边 L", l, "mm", "L = b / sin(α)"),
             CalcResult("爬坡高度", h, "mm", "h = b × tan(α)"),
-            CalcResult("切口宽", cut, "mm"),
+            CalcResult("切口宽", calcCutWidth(params.height, params.angle), "mm"),
             CalcResult("折弯位置", params.width / 2 - x / 2, "mm")
         )
     }
@@ -73,7 +72,7 @@ object FormulaEngine {
             CalcResult("底边 X", x, "mm"),
             CalcResult("斜边 L", l, "mm"),
             CalcResult("爬坡高度", h, "mm"),
-            CalcResult("切口宽", calcCutWidth(l, params.angle), "mm"),
+            CalcResult("切口宽", calcCutWidth(params.height, params.angle), "mm"),
             CalcResult("折弯位置", params.width / 2 - x / 2, "mm")
         )
         if (params.layers > 1) {
@@ -93,7 +92,7 @@ object FormulaEngine {
         return listOf(
             CalcResult("底边 X", x, "mm"),
             CalcResult("弧长 L", l, "mm"),
-            CalcResult("切口宽", calcCutWidth(l, params.angle), "mm")
+            CalcResult("切口宽", calcCutWidth(params.width, params.angle), "mm")
         )
     }
     
@@ -120,7 +119,7 @@ object FormulaEngine {
             CalcResult("宽度差", deltaW, "mm"),
             CalcResult("高度差", deltaH, "mm"),
             CalcResult("斜边长度", l, "mm"),
-            CalcResult("切口宽", calcCutWidth(l, 45.0), "mm")
+            CalcResult("宽度差/2", deltaW / 2, "mm")
         )
     }
     
@@ -137,12 +136,12 @@ object FormulaEngine {
     }
     
     fun calc90Degree(params: CalcParams): List<CalcResult> {
-        val x = params.distance * QuickCoefficients.ANGLE_45
+        val x = calcBottomX(params.distance, 45.0)
         val l = params.distance / sin(45.0 * DEG_TO_RAD)
         return listOf(
             CalcResult("底边 X", x, "mm"),
             CalcResult("斜边 L", l, "mm"),
-            CalcResult("切口宽", calcCutWidth(l, 45.0), "mm"),
+            CalcResult("切口宽", calcCutWidth(params.width, 45.0), "mm"),
             CalcResult("弯曲半径", params.width / 2, "mm")
         )
     }

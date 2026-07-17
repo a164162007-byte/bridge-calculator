@@ -62,9 +62,9 @@ class FormulaViewModel {
         FormulaItem("多层偏移", "e = d + b×tan(α/2)", "计算多层桥架的偏移量")
     )
     fun getQuickCoefficients() = listOf(
-        FormulaItem("30°弯头", "X = 0.536 × b", "速算系数 0.536"),
-        FormulaItem("45°弯头", "X = 0.828 × b", "速算系数 0.828"),
-        FormulaItem("60°弯头", "X = 1.414 × b", "速算系数 1.414"),
-        FormulaItem("90°弯头", "X = b", "两个45°组合")
+        FormulaItem("30°弯头", "下料x = 0.536 × H", "速算系数 0.536"),
+        FormulaItem("45°弯头", "下料x = 0.828 × H", "速算系数 0.828"),
+        FormulaItem("60°弯头", "下料x = 1.155 × H", "速算系数 1.155"),
+        FormulaItem("90°弯头", "下料x = 2.0 × H", "两个45°组合")
     )
 }

@@ -312,8 +312,8 @@ private fun DrawScope.drawCompositeCalculation(params: CalcParams, cw: Float, ch
     val a1Rad = angle1Deg * PI.toFloat() / 180f
     val a2Rad = angle2Deg * PI.toFloat() / 180f
 
-    val cutW1 = W * tan(a1Rad / 2f)
-    val cutW2 = W * tan(a2Rad / 2f)
+    val cutW1 = 2f * W * tan(a1Rad / 2f)
+    val cutW2 = 2f * W * tan(a2Rad / 2f)
 
     val margin = 30f
     val bottomMargin = 60f
