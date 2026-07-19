@@ -32,10 +32,10 @@ object FormulaEngine {
         }
     }
     
-    fun calcMultiLayerOffset(d: Double, b: Double, alpha: Double): List<Double> {
+    fun calcMultiLayerOffset(d: Double, b: Double, alpha: Double, layers: Int = 2): List<Double> {
         val e = d + b * tan(alpha * DEG_TO_RAD / 2)
-        val c = 2 * b * tan(alpha * DEG_TO_RAD / 2)
-        val h = 2 * b * tan(alpha * DEG_TO_RAD / 2)
+        val c = e * maxOf(1, layers - 1)
+        val h = b * tan(alpha * DEG_TO_RAD)
         return listOf(e, c, h)
     }
     
@@ -60,7 +60,7 @@ object FormulaEngine {
             CalcResult("斜边 L", l, "mm", "L = b / sin(α)"),
             CalcResult("爬坡高度", h, "mm", "h = b × tan(α)"),
             CalcResult("切口宽", calcCutWidth(params.height, params.angle), "mm"),
-            CalcResult("折弯位置", params.width / 2 - x / 2, "mm")
+            CalcResult("折弯位置", params.distance / 2 - x / 2, "mm")
         )
     }
     
@@ -73,10 +73,10 @@ object FormulaEngine {
             CalcResult("斜边 L", l, "mm"),
             CalcResult("爬坡高度", h, "mm"),
             CalcResult("切口宽", calcCutWidth(params.height, params.angle), "mm"),
-            CalcResult("折弯位置", params.width / 2 - x / 2, "mm")
+            CalcResult("折弯位置", params.distance / 2 - x / 2, "mm")
         )
         if (params.layers > 1) {
-            val offsets = calcMultiLayerOffset(params.layerSpacing, params.distance, params.angle)
+            val offsets = calcMultiLayerOffset(params.layerSpacing, params.distance, params.angle, params.layers)
             results.addAll(listOf(
                 CalcResult("层偏移 e", offsets[0], "mm"),
                 CalcResult("总宽度 c", offsets[1], "mm"),
@@ -101,7 +101,7 @@ object FormulaEngine {
         val l1 = calcHypotenuse(params.distance1, params.angle1)
         val x2 = calcBottomX(params.distance2, params.angle2)
         val l2 = calcHypotenuse(params.distance2, params.angle2)
-        val totalHeight = params.height * 2  // 用height字段代替
+        val totalHeight = calcHeight(params.distance1, params.angle1)
         return listOf(
             CalcResult("第一段底边", x1, "mm"),
             CalcResult("第一段斜边", l1, "mm"),
@@ -124,7 +124,7 @@ object FormulaEngine {
     }
     
     fun calcTee(params: CalcParams): List<CalcResult> {
-        val mainCut = params.width * 0.3
+        val mainCut = params.width * 0.5
         val branchW = params.width * 0.5
         val funnel = calcTeeFunnel(params.width, branchW, params.height)
         return listOf(
